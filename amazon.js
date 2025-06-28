@@ -7,8 +7,7 @@
 // @match        www.amazon.com/*
 // @grant        none
 // ==/UserScript==
-debugger
-const strTest = str => /^[\(\)\[\]a-z, 0-9]*$/gi.test(str);
+const strTest = str => /^[\(\)\[\]a-z;&%\-, 0-9]*$/gi.test(str);
 
 function add(data){
     var request = new XMLHttpRequest();
@@ -18,171 +17,504 @@ function add(data){
     request.send(JSON.stringify(data));
 }
 
+function levenshtein(a, b) {
+  const m = a.length;
+  const n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1].toLowerCase() === b[j - 1].toLowerCase()) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = 1 + Math.min(
+          dp[i - 1][j],    // delete
+          dp[i][j - 1],    // insert
+          dp[i - 1][j - 1] // substitute
+        );
+      }
+    }
+  }
+
+  return dp[m][n];
+}
+
+function findWordMatchScore(ingredient, input) {
+  const ingredientWords = ingredient.toLowerCase().split(/\s+/);
+  const inputWords = input.toLowerCase().split(/\s+/);
+
+  let bestWordDistance = Infinity;
+
+  for (const iw of ingredientWords) {
+    for (const tw of inputWords) {
+      if (iw === tw) return { distance: 0, word: iw }; // exact match
+      const dist = levenshtein(iw, tw);
+      if (dist < bestWordDistance) {
+        bestWordDistance = dist;
+      }
+    }
+  }
+
+  return { distance: bestWordDistance };
+}
+
+function findNearestIngredientMatchWithConfidence(ingredientList, input) {
+  let bestMatch = null;
+  let bestScore = Infinity;
+
+  for (const ingredient of ingredientList) {
+    const { distance } = findWordMatchScore(ingredient, input);
+    if (distance < bestScore) {
+      bestScore = distance;
+      bestMatch = ingredient;
+    }
+  }
+
+  // Confidence = 1 - (normalized word-level distance)
+  // Normalized using average word length (or 10 as safe default)
+  const averageWordLength = 6;
+  const confidence = Math.max(0, 1 - bestScore / averageWordLength);
+
+  return {
+    match: bestMatch,
+    confidence: confidence.toFixed(2)
+  };
+}
+/*
+const ingredients = [
+  "Milk",
+  "Soy Lecithin",
+  "Palm Oil",
+  "Peanuts",
+  "Calcium Carbonate"
+];
+
+const input = "milk made in a facility that handles soy";
+
+const result = findNearestIngredientMatchWithConfidence(ingredients, input);
+console.log("Best Match:", result.match);
+console.log("Confidence:", result.confidence);
+
+*/
+
 
 var jainIngredients = [
-    "wheat",
-    "rice",
-    "barley",
-    "oats",
-    "quinoa",
-    "millet",
-    "corn",
-    "chickpeas",
-    "chana",
-    "kidney beans",
-    "rajma",
-    "black-eyed peas",
-    "lobia",
-    "soybeans",
-    "bottle gourd",
-    "lauki",
-    "bitter gourd",
-    "karela",
-    "pumpkin",
-    "kaddu",
-    "cucumber",
-    "bell peppers",
-    "capsicum",
-    "cabbage",
-    "moong dal",
-    "toor dal",
-    "urad dal",
-    "moong",
-    "toor",
-    "apples",
-    "bananas",
-    "oranges",
-    "mangoes",
-    "papaya",
-    "grapes",
-    "pomegranate",
-    "guava",
-    "berries",
-    "cauliflower",
-    "broccoli",
-    "spinach",
-    "palak",
-    "fenugreek leaves",
-    "methi",
-    "tomatoes",
-    "eggplant",
-    "brinjal",
-    "baingan",
-    "zucchini",
-    "milk",
-    "yogurt",
-    "curd",
-    "ghee",
-    "clarified butter",
-    "paneer",
-    "cottage cheese",
-    "buttermilk",
-    "almonds",
-    "cashews",
-    "walnuts",
-    "pistachios",
-    "sunflower seeds",
-    "pumpkin seeds",
-    "turmeric",
-    "cumin",
-    "jeera",
-    "coriander",
-    "dhania",
-    "mustard seeds",
-    "asafoetida",
-    "hing",
-    "dried ginger",
-    "ginger powder",
-    "green chilies",
-    "curry leaves",
-    "mint",
-    "cilantro",
-    "coriander leaves",
-    "mustard oil",
-    "sunflower oil",
-    "coconut oil",
-    "olive oil",
-    "groundnut oil",
-    "avocado oil",
-    "sugar",
-    "sugar cane",
-    "jaggery",
-    "tofu",
-    "coconut",
-    "tamarind",
-    "lemon juice",
-    "lemon",
-    "salt",
-    "vanilla extract",
-    "vanilla",
-    "fruit and vegetable juice",
-    "sea salt",
-    "green tea",
-    "plum",
-    "flaxseed",
-    "oregano",
-    "extracts of oregano",
-    "natural flavor",
-    "sodium citrate",
-    "palm oil",
-    "palm",
-    "milk fat",
-    "butter",
-    "tapioca syrup",
-    "water",
-    "raspberry powder",
-    "soy lecithin",
-    "sodium citrate",
-    "corn syrup",
-    "corn",
-    "whole milk powder",
-    "butter",
-    "green tea",
-    "fruit and vegetable juice",
-    "color",
-    "cream",
-    "agar",
-    "enriched corn meal",
-    "vegetable oil",
-    "salt",
-    "partially hydrogenated soybean oil",
-    "maltodextrin",
-    "disodium phosphate",
-    "monosodium glutamate"
+    "artificial flavors", "agar", "almonds", "apples", "artificial color", "artificial flavor", "asafoetida", "avocado oil",
+    "baingan", "baking soda", "bananas", "barley", "bell peppers", "berries", "bitter gourd",
+    "black-eyed peas", "bottle gourd", "brinjal", "broccoli", "butter", "buttermilk", "cabbage",
+    "calcium carbonate", "cane sugar", "canola", "capsicum", "carnauba wax", "cashews", "cauliflower",
+    "chana", "chickpeas", "chocolate", "cilantro", "clarified butter", "cocoa butter", "coconut",
+    "coconut oil", "color", "coriander", "coriander leaves", "corn", "corn syrup", "corn syrup solids",
+    "cornstarch", "cornstarch less than 1% of corn syrup", "cottage cheese", "cream", "cucumber",
+    "cumin", "curd", "curry leaves", "dark chocolate", "dextrin", "dhania", "disodium phosphate",
+    "dried ginger", "eggplant", "enriched corn meal", "extracts of oregano", "fenugreek leaves",
+    "flaxseed", "fruit and vegetable juice", "ghee", "ginger powder", "grapes", "green chilies",
+    "green tea", "groundnut oil", "guava", "gum acacia", "hing", "hydrogenated cottonseed oil",
+    "hydrogenated palm kernel oil", "invert sugar", "jaggery", "jeera", "kaddu", "karela", "kidney beans",
+    "lauki", "lecithin", "lemon", "lemon juice", "less than 2% - dextrose", "lobia", "maltodextrin",
+    "mangoes", "methi", "milk", "milkfat", "millet", "mint", "monosodium glutamate", "moong", "moong dal",
+    "mustard oil", "mustard seeds", "natural flavor", "oats", "olive oil", "oranges", "oregano", "palak",
+    "palm", "palm kernel oil", "palm oil", "paneer", "papaya", "partially hydrogenated soybean oil",
+    "peanut butter", "peanuts", "pgpr", "pistachios", "plum", "pomegranate", "pumpkin", "pumpkin seeds",
+    "quinoa", "rajma", "raspberry powder", "rice", "salt", "sea salt", "skim milk", "sodium citrate",
+    "soy", "soybeans", "spinach", "sugar", "sugar cane", "sunflower oil", "sunflower seeds", "tamarind",
+    "tapioca syrup", "tbhq to maintain freshness", "tofu", "tomatoes", "toor", "toor dal", "turmeric",
+    "turmeric powder", "urad dal", "vanilla", "vanilla extract", "vanillin", "vegetable oil", "walnuts",
+    "water", "wheat", "wheat flour", "wheat syrup", "whey", "whole milk powder", "whole wheat", "yeast",
+    "yogurt", "zucchini"
 ];
-
-
-var nonVegiterianIngredients = [];
 
 var nonJainIngredients = [
-    "beet syrup",
-    "beet",
-    "unsweetened chocolate",
-    "cocoa butter",
-    "whey",
-    "cheddar cheese",
-    "dour cream",
-    "artificial flavor",
-    "lactic acid",
-    "artificial color (including yellow 6)",
+    "potatoes",
+    "artificial and natural flavours",
+    "natural flavours",
+    "apios", "arrowroot", "beet", "beet syrup", "beetroot", "blue 1", "blue 1 lake", "blue 2", "blue 2 lake",
+    "burdock root", "carrot", "cassava", "celeriac", "cheddar cheese", "chinese artichoke", "daikon",
+    "dour cream", "egg", "egg whites", "eggs", "elephant yam", "fennel", "fennel bulb", "galangal",
+    "garlic", "ginger", "horseradish", "includes blue 1 lake", "jerusalem artichoke", "jicama", "kohlrabi",
+    "lactic acid", "less than 2% - lactose", "lotus root", "malanga", "oca", "onion", "onion powder",
+    "parsnip", "potato", "radish", "radishes", "red 40", "red 40 lake", "rutabaga", "rutabagas", "salsify",
+    "shallot", "skirret", "sour cream", "soy lecithin", "suran", "sweet potato", "taro", "turnip",
+    "turnips", "ulluco", "wasabi", "yam", "yellow 5", "yellow 5 lake", "yellow 6", "yellow 6 lake"
 ];
 
-var tithiIngredients = [];
+var veganIngredients = [
+    "potatoes",
+    "sugar", "cane sugar", "agar", "yellow 6", "yellow 6 lake", "blue 1", "blue 1 lake", "blue 2", "blue 2 lake", "red 40", "red 40 lake", "yellow 5", "yellow 5 lake",
+    "almonds",
+    "apples",
+    "artificial color",
+    "artificial flavor",
+    "asafoetida",
+    "avocado oil",
+    "baingan",
+    "baking soda",
+    "bananas",
+    "barley",
+    "bell peppers",
+    "berries",
+    "bitter gourd",
+    "black-eyed peas",
+    "bottle gourd",
+    "brinjal",
+    "broccoli",
+    "cabbage",
+    "calcium carbonate",
+    "canola",
+    "capsicum",
+    "carnauba wax",
+    "cashews",
+    "cauliflower",
+    "chana",
+    "chickpeas",
+    "cilantro",
+    "cocoa butter",
+    "coconut",
+    "coconut oil",
+    "color",
+    "coriander",
+    "coriander leaves",
+    "corn",
+    "corn syrup",
+    "corn syrup solids",
+    "cornstarch",
+    "cornstarch less than 1% of corn syrup",
+    "cucumber",
+    "cumin",
+    "curry leaves",
+    "dextrin",
+    "dhania",
+    "disodium phosphate",
+    "dried ginger",
+    "eggplant",
+    "enriched corn meal",
+    "extracts of oregano",
+    "fenugreek leaves",
+    "flaxseed",
+    "fruit and vegetable juice",
+    "ginger powder",
+    "grapes",
+    "green chilies",
+    "green tea",
+    "groundnut oil",
+    "guava",
+    "gum acacia",
+    "hing",
+    "hydrogenated cottonseed oil",
+    "hydrogenated palm kernel oil",
+    "invert sugar",
+    "jaggery",
+    "jeera",
+    "kaddu",
+    "karela",
+    "kidney beans",
+    "lauki",
+    "lemon",
+    "lemon juice",
+    "less than 2% - dextrose",
+    "lobia",
+    "maltodextrin",
+    "mangoes",
+    "methi",
+    "millet",
+    "mint",
+    "monosodium glutamate",
+    "moong",
+    "moong dal",
+    "mustard oil",
+    "mustard seeds",
+    "oats",
+    "olive oil",
+    "oranges",
+    "oregano",
+    "palak",
+    "palm",
+    "palm kernel oil",
+    "palm oil",
+    "papaya",
+    "partially hydrogenated soybean oil",
+    "peanut butter",
+    "peanuts",
+    "pistachios",
+    "plum",
+    "pomegranate",
+    "pumpkin",
+    "pumpkin seeds",
+    "quinoa",
+    "rajma",
+    "raspberry powder",
+    "rice",
+    "salt",
+    "sea salt",
+    "sodium citrate",
+    "soy",
+    "soybeans",
+    "spinach",
+    "sugar cane",
+    "sunflower oil",
+    "sunflower seeds",
+    "tamarind",
+    "tapioca syrup",
+    "tbhq to maintain freshness",
+    "tofu",
+    "tomatoes",
+    "toor",
+    "toor dal",
+    "turmeric",
+    "turmeric powder",
+    "urad dal",
+    "vanilla",
+    "vanilla extract",
+    "vanillin",
+    "vegetable oil",
+    "walnuts",
+    "water",
+    "wheat",
+    "wheat flour",
+    "wheat syrup",
+    "whole wheat",
+    "yeast",
+    "zucchini"
+];
 
-var veganIngredients = [];
+var nonVeganIngredients = [
+    "artificial and natural flavours",
+    "natural flavours",
+    "egg", "egg whites", "eggs", "mono and diglycerides",
+    "butter", "buttermilk", "cheddar cheese", "chocolate", "clarified butter",
+    "cottage cheese", "cream", "curd", "dark chocolate", "ghee", "milk", "milkfat", "natural flavor",
+    "paneer", "pgpr", "skim milk", "whey", "whole milk powder", "yogurt", "unsweetened chocolate",
+    "soy lecithin", "lecithin", "less than 2% - lactose", "lactic acid"
+];
 
 var vegiterianIngredients = [
-    "beet syrup",
-    "beet",
-    "unsweetened chocolate",
-    "cocoa butter",
-    "whey",
-    "cheddar cheese",
-    "dour cream",
+    "potatoes",
+    "agar",
+    "almonds",
+    "apples",
+    "artificial color",
     "artificial flavor",
+    "asafoetida",
+    "avocado oil",
+    "baingan",
+    "baking soda",
+    "bananas",
+    "barley",
+    "bell peppers",
+    "berries",
+    "bitter gourd",
+    "black-eyed peas",
+    "bottle gourd",
+    "brinjal",
+    "broccoli",
+    "butter",
+    "buttermilk",
+    "cabbage",
+    "calcium carbonate",
+    "cane sugar",
+    "canola",
+    "capsicum",
+    "carnauba wax",
+    "cashews",
+    "cauliflower",
+    "chana",
+    "chickpeas",
+    "chocolate",
+    "cilantro",
+    "clarified butter",
+    "cocoa butter",
+    "coconut",
+    "coconut oil",
+    "color",
+    "coriander",
+    "coriander leaves",
+    "corn",
+    "corn syrup",
+    "corn syrup solids",
+    "cornstarch",
+    "cornstarch less than 1% of corn syrup",
+    "cottage cheese",
+    "cream",
+    "cucumber",
+    "cumin",
+    "curd",
+    "curry leaves",
+    "dark chocolate",
+    "dextrin",
+    "dhania",
+    "disodium phosphate",
+    "dried ginger",
+    "eggplant",
+    "enriched corn meal",
+    "extracts of oregano",
+    "fenugreek leaves",
+    "flaxseed",
+    "fruit and vegetable juice",
+    "ghee",
+    "ginger powder",
+    "grapes",
+    "green chilies",
+    "green tea",
+    "groundnut oil",
+    "guava",
+    "gum acacia",
+    "hing",
+    "hydrogenated cottonseed oil",
+    "hydrogenated palm kernel oil",
+    "invert sugar",
+    "jaggery",
+    "jeera",
+    "kaddu",
+    "karela",
+    "kidney beans",
+    "lauki",
+    "lecithin",
+    "lemon",
+    "lemon juice",
+    "less than 2% - dextrose",
+    "lobia",
+    "maltodextrin",
+    "mangoes",
+    "methi",
+    "milk",
+    "milkfat",
+    "millet",
+    "mint",
+    "monosodium glutamate",
+    "moong",
+    "moong dal",
+    "mustard oil",
+    "mustard seeds",
+    "natural flavor",
+    "oats",
+    "olive oil",
+    "oranges",
+    "oregano",
+    "palak",
+    "palm",
+    "palm kernel oil",
+    "palm oil",
+    "paneer",
+    "papaya",
+    "partially hydrogenated soybean oil",
+    "peanut butter",
+    "peanuts",
+    "pgpr",
+    "pistachios",
+    "plum",
+    "pomegranate",
+    "pumpkin",
+    "pumpkin seeds",
+    "quinoa",
+    "rajma",
+    "raspberry powder",
+    "rice",
+    "salt",
+    "sea salt",
+    "skim milk",
+    "sodium citrate",
+    "soy",
+    "soybeans",
+    "spinach",
+    "sugar",
+    "sugar cane",
+    "sunflower oil",
+    "sunflower seeds",
+    "tamarind",
+    "tapioca syrup",
+    "tbhq to maintain freshness",
+    "tofu",
+    "tomatoes",
+    "toor",
+    "toor dal",
+    "turmeric",
+    "turmeric powder",
+    "urad dal",
+    "vanilla",
+    "vanilla extract",
+    "vanillin",
+    "vegetable oil",
+    "walnuts",
+    "water",
+    "wheat",
+    "wheat flour",
+    "wheat syrup",
+    "whole milk powder",
+    "whole wheat",
+    "yeast",
+    "yogurt",
+    "zucchini",
+    "apios",
+    "arrowroot",
+    "beet",
+    "beet syrup",
+    "beetroot",
+    "blue 1",
+    "blue 1 lake",
+    "blue 2",
+    "blue 2 lake",
+    "burdock root",
+    "carrot",
+    "cassava",
+    "celeriac",
+    "cheddar cheese",
+    "chinese artichoke",
+    "daikon",
+    "dour cream",
+    "elephant yam",
+    "fennel",
+    "fennel bulb",
+    "galangal",
+    "garlic",
+    "ginger",
+    "horseradish",
+    "includes blue 1 lake",
+    "jerusalem artichoke",
+    "jicama",
+    "kohlrabi",
     "lactic acid",
-    "artificial color (including yellow 6)",
+    "less than 2% - lactose",
+    "lotus root",
+    "malanga",
+    "oca",
+    "onion",
+    "onion powder",
+    "parsnip",
+    "potato",
+    "radish",
+    "radishes",
+    "red 40",
+    "red 40 lake",
+    "rutabaga",
+    "rutabagas",
+    "salsify",
+    "shallot",
+    "skirret",
+    "sour cream",
+    "soy lecithin",
+    "suran",
+    "sweet potato",
+    "taro",
+    "turnip",
+    "turnips",
+    "ulluco",
+    "wasabi",
+    "yam",
+    "yellow 5",
+    "yellow 5 lake",
+    "yellow 6",
+    "yellow 6 lake"
 ];
+
+var notVegiterianIngredients = [
+    "artificial and natural flavours",
+    "natural flavours","egg", "egg whites", "eggs", "mono and diglycerides"
+];
+
+var allIngredients = [].concat(notVegiterianIngredients,vegiterianIngredients,veganIngredients,nonVeganIngredients,nonJainIngredients,notVegiterianIngredients,jainIngredients)
 
 
 function isJain(ingredientName){
@@ -193,42 +525,12 @@ function isNonJain(ingredientName){
     return nonJainIngredients.includes(ingredientName);
 }
 
-
-function computeJainSubIngredients (subIngredients){
-    var jain = "YES";
-
-    var allSubJain = true;
-    var anySubNonVeg = false;
-    var anySubNonJain = false;
-    for (let i = 0; i < subIngredients.length; i++) {
-        var subIngredient = subIngredients[i];
-
-        if(isJain(subIngredient.name.toLowerCase())) {// if subIngredient is jain
-            allSubJain = allSubJain && true;
-        } else if (isNonVegiterian(subIngredient.name.toLowerCase())) {// if subIngredient is non vegiterian
-            anySubNonVeg = anySubNonVeg || true;
-        } else if (isNonJain(subIngredient.name.toLowerCase())){
-            anySubNonJain = anySubNonJain || true;
-        } else { // not sure it is jain or not.
-             allSubJain = allSubJain && false;
-        }
-    }
-    if (allSubJain && !anySubNonVeg) {
-        jain = "YES"
-    } else if (anySubNonVeg || anySubNonJain) {
-        jain = "NO"
-    } else {
-        jain = "MAYBE"
-    }
-    return jain;
-}
-
 function computeJainSinglIngredient (ingredient) {
     var jain = "";
     if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
-        var subJain = computeJainSubIngredients(ingredient.subIngredients)
+        var subJain = computeJain(ingredient.subIngredients)
         if (subJain === "NO") { // if subIngredient is not jain
-            jain = "NO";
+            return "NO";
         } else if (subJain === "YES") { // if subIngredient is jain
             jain = "YES";
         } else if (subJain === "MAYBE") { // if subIngredient is not sure jain
@@ -237,12 +539,20 @@ function computeJainSinglIngredient (ingredient) {
     }
     if(isJain(ingredient.name.toLowerCase())) { // if ingredient is jain
         jain = "YES";
-    } else if (isNonVegiterian(ingredient.name.toLowerCase())) {// if ingredient is non vegiterian
-        jain = "NO";
+    } else if (isNotVegitarian(ingredient)) {// if ingredient is non vegiterian
+        return "NO";
     } else if (isNonJain(ingredient.name.toLowerCase())){
-        jain = "NO";
+        return "NO";
     } else if (!(jain === "YES" || jain === "NO")){ // not sure it is jain or not.
         jain = "MAYBE";
+        let tmp = null;
+        if (jain === "MAYBE") {
+            tmp = findNearestIngredientMatchWithConfidence( allIngredients, ingredient.name );
+            if (tmp.confidence > 0.9){
+                console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+                return computeJainSinglIngredient({name:tmp.match})
+            }
+        }
     }
     return jain;
 }
@@ -253,25 +563,30 @@ function computeJain (ingredients) {
     var allJain = true;
     var anyNonVeg = false;
     var anyNonJain = false;
+    let stop = false;
     for (let i = 0; i < ingredients.length; i++) {
+        if(stop) {continue}
         var ingredient = ingredients [i];
         if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
-            var subJain = computeJainSubIngredients(ingredient.subIngredients)
+            var subJain = computeJain(ingredient.subIngredients)
             if (subJain === "NO") { // if subIngredient is not jain
                 allJain = allJain && false;
+                return "NO";
             } else if (subJain === "YES") { // if subIngredient is jain
                 allJain = allJain && true;
             } else if (subJain === "MAYBE") { // if subIngredient is not sure jain
                 allJain = allJain && false;
             }
-        } else if(isJain(ingredient.name.toLowerCase())) { // if ingredient is jain
-               allJain = allJain && true;
-        } else if (isNonVegiterian(ingredient.name.toLowerCase())) {// if ingredient is non vegiterian
-            anyNonVeg = anyNonVeg || true;
-        } else if (isNonJain(ingredient.name.toLowerCase())){
-            anyNonJain = anyNonJain || true;
-        } else { // not sure it is jain or not.
-             allJain = allJain && false;
+        } else {
+            let a = computeJainSinglIngredient(ingredients[i])
+            if (a === "NO") {
+                allJain = allJain && false;
+                return "NO";
+            } else if (a === "YES") {
+                allJain = allJain && true;
+            } else if (a === "MAYBE") {
+                allJain = allJain && false;
+            }
         }
     }
 
@@ -286,7 +601,7 @@ function computeJain (ingredients) {
 }
 
 function isNotVegitarian(ingredient){
-    return nonVegiterianIngredients.includes(ingredient.name.toLowerCase());
+    return notVegiterianIngredients.includes(ingredient.name.toLowerCase());
 }
 
 function isVegiterian(ingredient){
@@ -294,51 +609,137 @@ function isVegiterian(ingredient){
        vegiterianIngredients.includes(ingredient.name.toLowerCase());
 }
 
-function computeVegSinglIngredient (ingredient, jain) {
-    if (jain == "YES") {
+function computeVegSinglIngredient (ingredient) {
+    if (ingredient.subIngredients) {return computeVeg(ingredient.subIngredients)}
+    if(isVegiterian(ingredient) && !isNotVegitarian(ingredient)){
         return "YES";
-    } else if (jain == "MAYBE" || jain == "NO") {
-        //check item
-        if(isVegiterian(ingredient) && !isNotVegitarian(ingredient)){
-            return "YES";
-        } else if (isNotVegitarian(ingredient)){
-            return "NO";
-        } else {
-            return "MAYBE";
-        }
+    } else if (isNotVegitarian(ingredient)){
+        return "NO";
+    } else {
+        let tmp = null;
+        tmp = findNearestIngredientMatchWithConfidence( allIngredients, ingredient.name );
+        if (tmp.confidence > 0.9){
+            console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+            return computeVegSinglIngredient({name:tmp.match})
+        }else{return "MAYBE";}
     }
 }
 
-function computeVeg (ingredients, jain) {
-    if (jain == "YES") {
-        return "YES";
-    } else if (jain == "MAYBE" || jain == "NO") {
-        //check item
+function computeVeg (ingredients) {
+    let veg = true;
+    let maybe = false;
+    for (let i in ingredients) {
+        let ing = ingredients[i];
+        if (ing.subIngredients) {
+            let subVeg = computeVeg(ing.subIngredients)
+            if (subVeg === "NO"){
+                return "NO";
+            } else if(subVeg === "YES"){
+                veg = veg && true;
+            } else {
+                maybe = maybe || true;
+            }
+            continue
+        }
+        let a = computeVegSinglIngredient(ingredients[i]);
+        if (a == "YES") { veg &= true}
+        else if (a == "NO") { return "NO" }
+        else {
+            let tmp = findNearestIngredientMatchWithConfidence( allIngredients, ingredients[i].name );
+            if (tmp.confidence > 0.9){
+                console.log(`${ingredients[i].name} to ${tmp.match} with confidence ${tmp.confidence}`);
+                let b = computeVegSinglIngredient({name:tmp.match})
+                if (b == "YES") { veg &= true}
+                else if (b == "NO") { return "NO" }
+                else {maybe = maybe || true;}
+            }
+            else {maybe = maybe || true;}
+        }
+    }
+    if (maybe) {
         return "MAYBE";
+    }else {
+        return "YES";
+    }
+}
+
+function computeVeganSinglIngredient(ingredient){
+    if (ingredient.subIngredients) {return computeVegan(ingredient.subIngredients)}
+    if(isVegan(ingredient) && !isNonVegan(ingredient)){
+        return "YES";
+    } else if (isNonVegan(ingredient)){
+        return "NO";
+    } else {
+        let tmp = null;
+        tmp = findNearestIngredientMatchWithConfidence( allIngredients, ingredient.name );
+        if (tmp.confidence > 0.9){
+            console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+            return computeVeganSinglIngredient({name:tmp.match})
+        }else{return "MAYBE";}
+    }
+}
+
+function computeVegan(ingredients){
+    let veg = true;
+    let maybe = false;
+    for (let i in ingredients) {
+        let ing = ingredients[i];
+        if (ing.subIngredients) {
+            let subVeg = computeVegan(ing.subIngredients)
+            if (subVeg === "NO"){
+                return "NO";
+            } else if(subVeg === "YES"){
+                veg = veg && true;
+            } else {
+                maybe = maybe || true;
+            }
+            continue
+        }
+        let a = computeVeganSinglIngredient(ingredients[i]);
+        if (a == "YES") { veg &= true}
+        else if (a == "NO") { return "NO" }
+        else {
+            let tmp = findNearestIngredientMatchWithConfidence( allIngredients, ingredients[i].name );
+            if (tmp.confidence > 0.9){
+                console.log(`${ingredients[i].name} to ${tmp.match} with confidence ${tmp.confidence}`);
+                let b = computeVeganSinglIngredient({name:tmp.match})
+                if (b == "YES") { veg &= true}
+                else if (b == "NO") { return "NO" }
+                else {maybe = maybe || true;}
+            }
+            else {maybe = maybe || true;}
+        }
+    }
+    if (maybe) {
+        return "MAYBE";
+    }else {
+        return "YES";
     }
 }
 
 function isVegan(ingredient){
-    return true
+    return veganIngredients.includes(ingredient.name.toLowerCase());
+}
+
+function isNonVegan(ingredient){
+    return nonVeganIngredients.includes(ingredient.name.toLowerCase());
 }
 
 function isJainTithi(ingredient){
     return true
 }
 
-function isNonVegiterian(ingredient){
-    return false
-}
-
 function displayIngredients (ingredients) {
     let displayString = "";
     for (let i = 0; i < ingredients.length; i++) {
-        let jain = computeJainSinglIngredient(ingredients[i]);
-        let veg = computeVegSinglIngredient(ingredients[i], jain);
+        let jain = ingredients[i].jain;
+        let veg = ingredients[i].vegitarian;
+        let vegan = ingredients[i].vegan;
         displayString += "<tr>";
         displayString += "<td>" + ingredients[i].name + "</td>";
         displayString += "<td>" + jain + "</td>";
         displayString += "<td>" + veg + "</td>";
+        displayString += "<td>" + vegan + "</td>";
         displayString += "</tr>";
         if (ingredients[i].subIngredients) {
             displayString += displayIngredients(ingredients[i].subIngredients);
@@ -348,7 +749,7 @@ function displayIngredients (ingredients) {
 }
 
 function displayIngredientsTable (ingredients) {
-    var displayString = "<table><tr><th>Name</th><th>Jain?</th><th>Vegitarian?</th></tr>";
+    var displayString = "<table><tr><th>Name</th><th>Jain?</th><th>Vegitarian?</th><th>Vegan?</th></tr>";
 
     displayString += displayIngredients(ingredients);
 
@@ -420,6 +821,8 @@ function displayIngredientsTable (ingredients) {
             const imageDivElement = document.querySelector('div.slick-list');
             const images = [];
 
+            if (landingImage) { images.push(landingImage.src)}
+
             if (imageDivElement != undefined) {
                 const imgElements = imageDivElement.querySelectorAll('img');
                 imgElements.forEach(img => {
@@ -429,7 +832,8 @@ function displayIngredientsTable (ingredients) {
             }
 
             var jain = computeJain(ingredientsList);
-            let veg = computeVeg(ingredientsList,jain);
+            let veg = computeVeg(ingredientsList);
+            let vegan = computeVegan(ingredientsList);
 
             let productDetail = {
                 "data":{
@@ -440,10 +844,10 @@ function displayIngredientsTable (ingredients) {
                                 "jain":jain
                             },
                             {
-                                "vegetarian":veg
+                                "vegitarian":veg
                             },
                             {
-                                "vegan":"MAYBE"
+                                "vegan":vegan
                             },
                             {
                                 "tithi":"MAYBE"
@@ -497,6 +901,7 @@ function displayIngredientsTable (ingredients) {
                 displayBox.innerHTML = `
                     <h3>Jain : ${jain}</h3>
                     <h3>Vegitarian : ${veg}</h3>
+                    <h3>Vegan : ${vegan}</h3>
                     <h3>Ingredients:</h3>
                     <p>${displayIngredientsTable(otherIngredientsAsJson)}</p>
                 `;
@@ -559,17 +964,27 @@ function displayIngredientsTable (ingredients) {
             let depth = 0;
 
             for (let char of cleaned) {
-                if (char === ',' && depth === 0) {
+                if (((char === ',' || char === ';') && depth === 0) || (char === ')' && depth === 1)) {
+                    if (depth === 1){depth--;current += ')'}
+                    if (current == ''){continue}
+                    current.replaceAll("  ", " ");
                     result.push(current.trim());
                     current = '';
                 } else {
                     if (char === '(' || char === '[') depth++;
                     if (char === ')' || char === ']') depth--;
                     if (strTest(char)){
-                        current += char;
+                        if (char === '[') {
+                            current += '(';
+                        } else if (char === ']'){
+                            current += ')'
+                        } else {
+                            current += char;
+                        }
                     }
                 }
             }
+            while (depth != 0){current += ")"; depth--;}
             if (current.trim()) result.push(current.trim());
 
             // Normalize "and" before last ingredient
@@ -583,15 +998,21 @@ function displayIngredientsTable (ingredients) {
                     tmp = {
                         name: match[1].trim(),
                         jain: "",
+                        vegitarian: "",
+                        vegan: "",
                         subIngredients: convertToJsonArray(match[2])
                     };
                 } else {
                     tmp = {
                         name: item,
-                        jain: ""
+                        jain: "",
+                        vegitarian: "",
+                        vegan: ""
                     };
                 }
                 tmp.jain = computeJainSinglIngredient(tmp);
+                tmp.vegitarian = computeVegSinglIngredient(tmp);
+                tmp.vegan = computeVeganSinglIngredient(tmp);
                 return tmp;
             });
 
