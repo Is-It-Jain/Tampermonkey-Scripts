@@ -9,8 +9,55 @@
 // ==/UserScript==
 const strTest = str => /^[\(\)\[\]a-z;&%, 0-9]*$/gi.test(str);
 
+function callback(error, responseJson) {
+    let loadingElement = document.querySelector("div#loading-box");
+
+    if (error) {
+        // Remove loading spinner
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+
+        // Display error message as dialog (alert for simplicity)
+        alert("Error occurred: " + error.message || error);
+        return; // Stop further processing
+    }
+
+    if (responseJson) {
+        // Hide/remove loading spinner
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+
+        //create a custom popup element:
+        const popup = document.createElement('div');
+
+        popup.style.padding = '30px';
+        popup.style.backgroundColor = '#d4edda';
+        popup.style.border = '1px solid #c3e6cb';
+        popup.style.borderRadius = '10px';
+        popup.style.zIndex = '9999';
+        popup.innerText = "Success! Product Details Saved!";
+
+        let displayDivElement = document.querySelector("div#display-box");
+        displayDivElement.appendChild(popup);
+
+    }
+}
+
 function add(data){
     var request = new XMLHttpRequest();
+
+    request.onload = function () {
+        if (request.status >= 200 && request.status < 300) {
+            callback(null, JSON.parse(request.responseText));
+        } else {
+            callback(new Error('Request failed: ' + request.status), null);
+        }
+    };
+    request.onerror = function () {
+        callback(new Error('Network error'), null);
+    };
     request.open('POST','https://mainserver-776168167171.us-west1.run.app/v1/create');
     request.setRequestHeader('Accept', 'application/json');
     request.setRequestHeader("Content-Type", "application/json");
@@ -317,6 +364,18 @@ var jainIngredients = [
   "blueberries",
   "fructose",
   "spice extractives",
+  "cultures",
+  "dehydrated parsley",
+  "pretzel declaration for wheels",
+  "thiamin",
+  "niacin",
+  "iron",
+  "tocopherols",
+  "spices",
+  "cheese crunchies enriched ground corn flour",
+  "cheddar cheese blend",
+  "cheese",
+
 ];
 
 var nonJainIngredients = [
@@ -374,6 +433,10 @@ var nonJainIngredients = [
   "mushroom",
   "dried potatoes",
   "potatoes",
+  "nachos",
+  "riboflavin",
+  "enzymes",
+  "gelatin",
 ];
 
 var veganIngredients = [
@@ -608,6 +671,14 @@ var veganIngredients = [
   "potatoes",
   "fructose",
   "spice extractives",
+  "cultures",
+  "dehydrated parsley",
+  "pretzel declaration for wheels",
+  "thiamin",
+  "niacin",
+  "iron",
+  "tocopherols",
+  "spices",
 
 ];
 
@@ -653,6 +724,13 @@ var nonVeganIngredients = [
   "beeswax",
   "butteroil",
   "bacon",
+  "nachos",
+  "cheese crunchies enriched ground corn flour",
+  "riboflavin",
+  "cheddar cheese blend",
+  "cheese",
+  "enzymes",
+  "gelatin",
 ];
 
 var vegetarianIngredients = [
@@ -882,6 +960,14 @@ var vegetarianIngredients = [
   "potatoes",
   "fructose",
   "spice extractives",
+  "cultures",
+  "dehydrated parsley",
+  "pretzel declaration for wheels",
+  "thiamin",
+  "niacin",
+  "iron",
+  "tocopherols",
+  "spices",
 ];
 
 var notVegetarianIngredients = [
@@ -895,6 +981,7 @@ var notVegetarianIngredients = [
     "pig",
     "meat",
     "bacon",
+    "gelatin",
 ];
 
 var allIngredients = [].concat(notVegetarianIngredients,vegetarianIngredients,veganIngredients,nonVeganIngredients,nonJainIngredients,notVegetarianIngredients,jainIngredients)
@@ -1230,11 +1317,7 @@ function cleanAmazonUrl(url) {
 }
 
 
-(function() {
-    'use strict';
 
-    // Wait for page to load completely
-    window.addEventListener('load', function() {
         // Function to extract ingredients
         function extractIngredients() {
             // Common selectors where ingredients might be found
@@ -1388,6 +1471,7 @@ function cleanAmazonUrl(url) {
             if (ingredients) {
 
                 const displayBox = document.createElement('div');
+                displayBox.id = 'display-box';
                 displayBox.style.position = 'fixed';
                 displayBox.style.top = '40px';
                 displayBox.style.right = '10px';
@@ -1397,7 +1481,8 @@ function cleanAmazonUrl(url) {
                 displayBox.style.borderRadius = '5px';
                 displayBox.style.zIndex = '9999';
                 displayBox.style.maxWidth = '400px';
-                displayBox.style.maxHeight = '500px';
+
+                displayBox.style.maxHeight = '700px';
                 displayBox.style.overflow = 'auto';
                 console.log(otherIngredientsAsJson);
 
@@ -1412,20 +1497,45 @@ function cleanAmazonUrl(url) {
 
                 // Optionally, create a button to copy JSON to clipboard
                 const copyButton = document.createElement('button');
-                copyButton.innerText = 'Click Here to Save Product Details to Steps To Kindness';
-                copyButton.style.position = 'fixed';
-                copyButton.style.top = '20px';
-                copyButton.style.right = '20px';
-                copyButton.style.backgroundColor = '#f8f8f8';
-                copyButton.style.border = '1px solid #ddd';
-                copyButton.style.borderRadius = '5px';
+                copyButton.innerText = 'Save Product Details';
+                copyButton.id = 'save-button';
+                copyButton.style.backgroundColor = '#ADD8E6';
+                copyButton.style.border = '2px solid #ddd';
+                copyButton.style.borderRadius = '10px';
                 copyButton.style.textAlign = 'left';
-                copyButton.style.fontSize = '17px';
-                copyButton.style.zIndex = 10000;
-                document.body.appendChild(copyButton);
+                copyButton.style.fontSize = '30px';
+                copyButton.style.zIndex = 9999;
+                displayBox.appendChild(copyButton);
 
                 copyButton.addEventListener('click', function() {
                     navigator.clipboard.writeText(productDetailsJson).then(function() {
+
+                        // Show loading spinner first
+                        // Create and show a CSS loading spinner
+                        const loadingBox = document.createElement('div');
+                        loadingBox.id = 'loading-box';
+                        loadingBox.style.position = 'fixed';
+                        loadingBox.style.top = '40px';
+                        loadingBox.style.right = '10px';
+                        loadingBox.style.padding = '20px';
+                        loadingBox.style.backgroundColor = '#ffffff';
+                        loadingBox.style.border = '1px solid #ddd';
+                        loadingBox.style.borderRadius = '5px';
+                        loadingBox.style.zIndex = '10000';
+                        loadingBox.style.display = 'flex';
+                        loadingBox.style.justifyContent = 'center';
+                        loadingBox.style.alignItems = 'center';
+                        loadingBox.innerHTML = `<div style="
+                                  width: 300px;
+                                  height: 300px;
+                                  border: 4px solid #ccc;
+                                  border-top: 4px solid #3498db;
+                                  border-radius: 50%;
+                                  animation: spin 1s linear infinite;
+                                  "></div>
+                                  `;
+
+                        document.body.appendChild(loadingBox);
                         add(productDetail);
                         navigator.clipboard.writeText(productDetailsJson);
 
@@ -1525,7 +1635,55 @@ function cleanAmazonUrl(url) {
             return structured;
         }
 
-        // Run the extraction
-        extractIngredients();
+(function() {
+    'use strict';
+
+    // Wait for page to load completely
+    window.addEventListener('load', function() {
+        // Show loading spinner first
+        // Create and show a CSS loading spinner
+        const loadingBox = document.createElement('div');
+        loadingBox.id = 'loading-box';
+        loadingBox.style.position = 'fixed';
+        loadingBox.style.top = '40px';
+        loadingBox.style.right = '10px';
+        loadingBox.style.padding = '20px';
+        loadingBox.style.backgroundColor = '#ffffff';
+        loadingBox.style.border = '1px solid #ddd';
+        loadingBox.style.borderRadius = '5px';
+        loadingBox.style.zIndex = '10000';
+        loadingBox.style.display = 'flex';
+        loadingBox.style.justifyContent = 'center';
+        loadingBox.style.alignItems = 'center';
+        loadingBox.innerHTML = `<div style="
+                                  width: 30px;
+                                  height: 30px;
+                                  border: 4px solid #ccc;
+                                  border-top: 4px solid #3498db;
+                                  border-radius: 50%;
+                                  animation: spin 1s linear infinite;
+                                  "></div>
+                                  `;
+        // Add animation CSS (only once)
+        if (!document.getElementById('spinner-style')) {
+            const style = document.createElement('style');
+            style.id = 'spinner-style';
+            style.innerHTML = `
+                               @keyframes spin {
+                                     0% { transform: rotate(0deg); }
+                                     100% { transform: rotate(360deg); }
+                               }
+                               `;
+            document.head.appendChild(style);
+        }
+
+        // Simulate loading (or replace with real async logic)
+        setTimeout(() => {
+            // Run the extraction
+            extractIngredients();
+            document.body.removeChild(loadingBox); // Remove spinner
+        }, 1000); // adjust time if needed
+
+        
     });
 })();
