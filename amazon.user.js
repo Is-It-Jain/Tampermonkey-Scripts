@@ -384,6 +384,7 @@ var jainIngredients = [
   "sesame",
   "sesame seed",
   "celery seed",
+  "plantain",
 ];
 
 var nonJainIngredients = [
@@ -701,6 +702,7 @@ var veganIngredients = [
   "sesame",
   "sesame seed",
   "spirulina",
+  "plantain",
 ];
 
 
@@ -754,6 +756,7 @@ var nonVeganIngredients = [
   "alpha tocopherol acetate",
   "vitamin e",
   "vitamin a palmitate",
+  "turkey",
 ];
 
 var vegetarianIngredients = [
@@ -1004,6 +1007,7 @@ var vegetarianIngredients = [
   "vitamin e",
   "vitamin a palmitate",
   "celery seed",
+  "plantain",
 ];
 
 var notVegetarianIngredients = [
@@ -1022,7 +1026,7 @@ var notVegetarianIngredients = [
     "flavors",
     "chicken",
     "pork",
-
+    "turkey",
 ];
 
 var allIngredients = [].concat(notVegetarianIngredients,vegetarianIngredients,veganIngredients,nonVeganIngredients,nonJainIngredients,notVegetarianIngredients,jainIngredients)
@@ -1830,6 +1834,6 @@ function convertToJsonArray(input) {
             document.body.removeChild(loadingBox); // Remove spinner
         }, 1000); // adjust time if needed
 
-        
+
     });
 })();
