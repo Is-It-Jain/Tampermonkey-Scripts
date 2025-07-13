@@ -8,7 +8,7 @@
 // @grant        none
 // ==/UserScript==
 const strTest = str => /^[\(\)\[\]a-z;&%, 0-9]*$/gi.test(str);
-
+var displayButton = true;
 function callback(error, responseJson) {
     let loadingElement = document.querySelector("div#loading-box");
 
@@ -375,7 +375,15 @@ var jainIngredients = [
   "cheese crunchies enriched ground corn flour",
   "cheddar cheese blend",
   "cheese",
-
+  "annatto",
+  "sait",
+  "cherries",
+  "strawberry",
+  "organic soy lecithin",
+  "poppy seed",
+  "sesame",
+  "sesame seed",
+  "celery seed",
 ];
 
 var nonJainIngredients = [
@@ -437,6 +445,10 @@ var nonJainIngredients = [
   "riboflavin",
   "enzymes",
   "gelatin",
+  "spirulina",
+  "alpha tocopherol acetate",
+  "vitamin e",
+  "vitamin a palmitate",
 ];
 
 var veganIngredients = [
@@ -679,7 +691,16 @@ var veganIngredients = [
   "iron",
   "tocopherols",
   "spices",
-
+  "annatto",
+  "sait",
+  "cherries",
+  "strawberry",
+  "organic soy lecithin",
+  "soy lecithin",
+  "poppy seed",
+  "sesame",
+  "sesame seed",
+  "spirulina",
 ];
 
 
@@ -715,7 +736,6 @@ var nonVeganIngredients = [
   "pgpr",
   "skim milk",
   "sour cream",
-  "soy lecithin",
   "unsweetened chocolate",
   "whey",
   "whole milk powder",
@@ -731,6 +751,9 @@ var nonVeganIngredients = [
   "cheese",
   "enzymes",
   "gelatin",
+  "alpha tocopherol acetate",
+  "vitamin e",
+  "vitamin a palmitate",
 ];
 
 var vegetarianIngredients = [
@@ -968,6 +991,19 @@ var vegetarianIngredients = [
   "iron",
   "tocopherols",
   "spices",
+  "annatto",
+  "sait",
+  "cherries",
+  "strawberry",
+  "organic soy lecithin",
+  "poppy seed",
+  "sesame",
+  "sesame seed",
+  "spirulina",
+  "alpha tocopherol acetate",
+  "vitamin e",
+  "vitamin a palmitate",
+  "celery seed",
 ];
 
 var notVegetarianIngredients = [
@@ -982,6 +1018,11 @@ var notVegetarianIngredients = [
     "meat",
     "bacon",
     "gelatin",
+    "beef",
+    "flavors",
+    "chicken",
+    "pork",
+
 ];
 
 var allIngredients = [].concat(notVegetarianIngredients,vegetarianIngredients,veganIngredients,nonVeganIngredients,nonJainIngredients,notVegetarianIngredients,jainIngredients)
@@ -996,37 +1037,42 @@ function isNonJain(ingredientName){
 }
 
 function computeJainSinglIngredient (ingredient) {
-    if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
-        var subJain = computeJain(ingredient.subIngredients)
-        if (subJain === "NO") { // if subIngredient is not jain
-            return "NO";
-        } else if (subJain === "YES") { // if subIngredient is jain
-            return "YES";
-        } else if (subJain === "MAYBE") { // if subIngredient is not sure jain
-            if (isJain(ingredient.name) && !isNonJain(ingredient.name)) {
-                return "YES";
-            } else if (isNonJain(ingredient.name) || isNotVegetarian(ingredient.name)) {
+    if(ingredient && ingredient.name) {
+        var vegSingle = computeVegSinglIngredient(ingredient);
+        var isJainValue = isJain(ingredient.name);
+        var isNotJainValue = isNonJain(ingredient.name);
+        if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
+            var subJain = computeJain(ingredient.subIngredients)
+            if (subJain === "NO") { // if subIngredient is not jain
                 return "NO";
+            } else if (subJain === "YES") { // if subIngredient is jain
+                return "YES";
+            } else if (subJain === "MAYBE") { // if subIngredient is not sure jain
+                if (isJainValue && !isNotJainValue) {
+                    return "YES";
+                } else if (isNotJainValue || vegSingle === "NO") {
+                    return "NO";
+                }
+                return "MAYBE";
             }
-            return "MAYBE";
-        }
-    } else if(isJain(ingredient.name.toLowerCase())) { // if ingredient is jain
-        return "YES";
-    } else if (isNonJain(ingredient.name) || isNotVegetarian(ingredient.name)) {// if ingredient is non vegetarian or non jain
-        return "NO";
-    } else { // not sure it is jain or not.
-        let tmp = null;
-        tmp = findNearestIngredientMatchWithConfidence( jainIngredients, ingredient.name );
-        if (tmp.confidence > 0.9){
-            console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+        } else if(isJainValue) { // if ingredient is jain
             return "YES";
-        } else {
-            tmp = findNearestIngredientMatchWithConfidence( nonJainIngredients, ingredient.name );
+        } else if (isNotJainValue || vegSingle === "NO") {// if ingredient is non vegetarian or non jain
+            return "NO";
+        } else { // not sure it is jain or not.
+            let tmp = null;
+            tmp = findNearestIngredientMatchWithConfidence( jainIngredients, ingredient.name );
             if (tmp.confidence > 0.9){
                 console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
-                return "NO";
+                return "YES";
             } else {
-                return "MAYBE";
+                tmp = findNearestIngredientMatchWithConfidence( nonJainIngredients, ingredient.name );
+                if (tmp.confidence > 0.9){
+                    console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+                    return "NO";
+                } else {
+                    return "MAYBE";
+                }
             }
         }
     }
@@ -1130,6 +1176,7 @@ function computeVegSinglIngredient (ingredient) {
             return "MAYBE";
         }
     }
+    return "MAYBE";
 }
 
 function computeVeg (ingredients) {
@@ -1178,41 +1225,47 @@ function computeVeg (ingredients) {
 }
 
 function computeVeganSinglIngredient(ingredient){
-    if (ingredient.subIngredients) {
-        var subVegan = computeVegan(ingredient.subIngredients)
-        if (subVegan === "NO") { // if subIngredient is not jain
-            return "NO";
-        } else if (subVegan === "YES") { // if subIngredient is jain
-            return "YES";
-        } else if (subVegan === "MAYBE") { // if subIngredient is not sure jain
-
-            if (isVegan(ingredient.name) && !isNonVegan(ingredient.name)) {
-                return "YES";
-            } else if (isNonVegan(ingredient.name) || isNotVegetarian(ingredient.name)) {
+    if (ingredient && ingredient.name){
+        var isVeganVal = isVegan(ingredient.name);
+        var isNonVeganVal = isNonVegan(ingredient.name)
+        var vegSingle = computeVegSinglIngredient(ingredient);
+        if (ingredient.subIngredients) {
+            var subVegan = computeVegan(ingredient.subIngredients)
+            if (subVegan === "NO") { // if subIngredient is not jain
                 return "NO";
+            } else if (subVegan === "YES") { // if subIngredient is jain
+                return "YES";
+            } else if (subVegan === "MAYBE") { // if subIngredient is not sure jain
+
+                if (isVeganVal && !isNonVeganVal) {
+                    return "YES";
+                } else if (isNonVeganVal || vegSingle === "NO") {
+                    return "NO";
+                }
+                return "MAYBE";
             }
-            return "MAYBE";
         }
-    }
-    if(isVegan(ingredient.name) && !isNonVegan(ingredient.name)){
-        return "YES";
-    } else if (isNonVegan(ingredient.name) || isNotVegetarian(ingredient.name)){
-        return "NO";
-    } else {
-        let tmp = null;
-        tmp = findNearestIngredientMatchWithConfidence( veganIngredients, ingredient.name );
-        if (tmp.confidence > 0.9){
-            console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+        if(isVeganVal && !isNonVeganVal){
             return "YES";
+        } else if (isNonVeganVal || vegSingle === "NO"){
+            return "NO";
         } else {
-            tmp = findNearestIngredientMatchWithConfidence( nonVeganIngredients, ingredient.name );
+            let tmp = null;
+            tmp = findNearestIngredientMatchWithConfidence( veganIngredients, ingredient.name );
             if (tmp.confidence > 0.9){
                 console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
-                return "NO";
+                return "YES";
+            } else {
+                tmp = findNearestIngredientMatchWithConfidence( nonVeganIngredients, ingredient.name );
+                if (tmp.confidence > 0.9){
+                    console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+                    return "NO";
+                }
+                return "MAYBE";
             }
-            return "MAYBE";
         }
     }
+    return "MAYBE";
 }
 
 function computeVegan(ingredients){
@@ -1272,20 +1325,25 @@ function isJainTithi(ingredientName){
     return true
 }
 
-function displayIngredients (ingredients) {
+function displayIngredients (ingredients, subCount = 0) {
     let displayString = "";
+    let sub = "";
+    for (let i = 0; i < subCount; i++){
+        sub += "- ";
+    }
     for (let i = 0; i < ingredients.length; i++) {
         let jain = ingredients[i].jain;
         let veg = ingredients[i].vegetarian;
         let vegan = ingredients[i].vegan;
+        displayButton &= ! (jain === "MAYBE") && !(veg === "MAYBE") && !(vegan === "MAYBE");
         displayString += "<tr>";
-        displayString += "<td>" + ingredients[i].name + "</td>";
+        displayString += "<td>" + sub + ingredients[i].name + "</td>";
         displayString += "<td>" + jain + "</td>";
         displayString += "<td>" + veg + "</td>";
         displayString += "<td>" + vegan + "</td>";
         displayString += "</tr>";
         if (ingredients[i].subIngredients) {
-            displayString += displayIngredients(ingredients[i].subIngredients);
+            displayString += displayIngredients(ingredients[i].subIngredients, subCount + 1);
         }
     }
     return displayString;
@@ -1318,63 +1376,63 @@ function cleanAmazonUrl(url) {
 
 
 
-        // Function to extract ingredients
-        function extractIngredients() {
-            // Common selectors where ingredients might be found
+// Function to extract ingredients
+function extractIngredients() {
+    // Common selectors where ingredients might be found
 
-            const possibleSelectors = [
-                '#nic-ingredients-content'
-            ];
+    const possibleSelectors = [
+        '#nic-ingredients-content'
+    ];
 
-            let ingredients = '';
-            let otherIngredientsAsJson;
-            let ingredientsList = [];
+    let ingredients = '';
+    let otherIngredientsAsJson;
+    let ingredientsList = [];
 
-            // Extract product name
-            const productNameElement = document.querySelector('span#productTitle');
-            const productName = productNameElement ? productNameElement.innerText.trim() : 'N/A';
+    // Extract product name
+    const productNameElement = document.querySelector('span#productTitle');
+    const productName = productNameElement ? productNameElement.innerText.trim() : 'N/A';
 
-            const dietryList = [];
+    const dietryList = [];
 
-            // Extract product description
+    // Extract product description
 
-            const productDescriptionElement = document.querySelector('div#productDescription_feature_div');
-            const productDescriptionSpanElement = productDescriptionElement? productDescriptionElement.querySelector('span') : undefined;
-            const productDescription = productDescriptionSpanElement ? productNameElement.innerText.trim() : 'N/A';
+    const productDescriptionElement = document.querySelector('div#productDescription_feature_div');
+    const productDescriptionSpanElement = productDescriptionElement? productDescriptionElement.querySelector('span') : undefined;
+    const productDescription = productDescriptionSpanElement ? productNameElement.innerText.trim() : 'N/A';
 
 
-            // Extract ingredients
-            for (let selector of possibleSelectors) {
-                const element = document.querySelector(selector);
+    // Extract ingredients
+    for (let selector of possibleSelectors) {
+        const element = document.querySelector(selector);
 
-                if (element) {
-                    const text = element.firstChild.textContent.trim();
+        if (element) {
+            const text = element.firstChild.textContent.trim();
 
-                    if (text) {
-                        ingredients = text;
-                        otherIngredientsAsJson = convertToJsonArray(ingredients);
-                        ingredientsList.push(...otherIngredientsAsJson);
-                    }
-                }
+            if (text) {
+                ingredients = text;
+                otherIngredientsAsJson = convertToJsonArray(ingredients);
+                ingredientsList.push(...otherIngredientsAsJson);
             }
+        }
+    }
 
-            // extract categories
-            const categotiesElement = document.querySelector('div#desktop-breadcrumbs_feature_div');
-            const categotiesListElement = categotiesElement.querySelectorAll('a.a-link-normal');
-            const categoriesList = [];
+    // extract categories
+    const categotiesElement = document.querySelector('div#desktop-breadcrumbs_feature_div');
+    const categotiesListElement = categotiesElement.querySelectorAll('a.a-link-normal');
+    const categoriesList = [];
 
-            categotiesListElement.forEach(categoryLinkElement => {
-            var categoriesText = categoryLinkElement.innerText.trim();
-                if (categoriesText != 'Categories') {
-                    categoriesList.push(categoriesText);
-                }
-            });
+    categotiesListElement.forEach(categoryLinkElement => {
+        var categoriesText = categoryLinkElement.innerText.trim();
+        if (categoriesText != 'Categories') {
+            categoriesList.push(categoriesText);
+        }
+    });
 
-            const nutritionsDivElement = document.querySelector('div.nutrition-panel');
-            const nutritionsFacts = {};
+    const nutritionsDivElement = document.querySelector('div.nutrition-panel');
+    const nutritionsFacts = {};
 
 
-            /*
+    /*
 
             const imageDivElement = document.querySelector('div.slick-list');
             const images = [];
@@ -1391,141 +1449,145 @@ function cleanAmazonUrl(url) {
                 });
             }*/
 
-            const container = document.querySelector('#main-image-container');
-            const imgElements = container.querySelectorAll('img');
-            const imageSrcs = Array.from(imgElements)
-                                 .map(img => img.getAttribute('src'))
-                                 .filter(src => src && src.startsWith('http') && !src.endsWith("gif"));
-            console.log(JSON.stringify(imageSrcs, null, 2));
+    const container = document.querySelector('#main-image-container');
+    const imgElements = container.querySelectorAll('img');
+    const imageSrcs = Array.from(imgElements)
+    .map(img => img.getAttribute('src'))
+    .filter(src => src && src.startsWith('http') && !src.endsWith("gif"));
+    console.log(JSON.stringify(imageSrcs, null, 2));
 
-            const productDetailsElement = document.querySelector('div#detailBullets_feature_div');
+    const productDetailsElement = document.querySelector('div#detailBullets_feature_div');
 
-            const bulletItems = document.querySelectorAll('#detailBullets_feature_div .a-list-item');
-            let upcValues = [];
+    const bulletItems = document.querySelectorAll('#detailBullets_feature_div .a-list-item');
+    let upcValues = [];
 
-            for (const item of bulletItems) {
-                const labelSpan = item.querySelector('.a-text-bold');
-                if (labelSpan && labelSpan.textContent.trim().startsWith('UPC')) {
-                    const valueSpan = labelSpan.nextElementSibling;
-                    if (valueSpan) {
-                        const upcValue = valueSpan.textContent.trim();
-                        upcValues = upcValue.split(/\s+/); // splits on one or more spaces
-                        console.log('UPC:', upcValues);
-                    }
-                    break; // stop after finding the first UPC
-                }
+    for (const item of bulletItems) {
+        const labelSpan = item.querySelector('.a-text-bold');
+        if (labelSpan && labelSpan.textContent.trim().startsWith('UPC')) {
+            const valueSpan = labelSpan.nextElementSibling;
+            if (valueSpan) {
+                const upcValue = valueSpan.textContent.trim();
+                upcValues = upcValue.split(/\s+/); // splits on one or more spaces
+                console.log('UPC:', upcValues);
             }
+            break; // stop after finding the first UPC
+        }
+    }
 
 
-            let jain = computeJain(ingredientsList);
-            let veg = computeVeg(ingredientsList);
-            let vegan = computeVegan(ingredientsList);
+    let jain = computeJain(ingredientsList);
+    let veg = computeVeg(ingredientsList);
+    let vegan = computeVegan(ingredientsList);
 
-            let productDetail = {
-                "data":{
-                    "version":"Version 2.0",
-                    "data":{
-                        "maindietary":[
-                            {
-                                "jain":jain
-                            },
-                            {
-                                "vegetarian":veg
-                            },
-                            {
-                                "vegan":vegan
-                            },
-                            {
-                                "tithi":"MAYBE"
-                            }
-                        ],
-                        "dietary":dietryList,
-                        "name":productName,
-                        "description":productDescription,
-                        "categories":categoriesList,
-                        "ingredients":ingredientsList,
-                        "barcode": upcValues,
-                        "weburl": cleanAmazonUrl(window.location.href),
-                        "brand":"Unkown",
-                        "images":imageSrcs,
-                        "store":[
-                            "Amazon"
-                        ]
+    let productDetail = {
+        "data":{
+            "version":"Version 2.0",
+            "data":{
+                "maindietary":[
+                    {
+                        "jain":jain
                     },
-                    "status":"NEW"
-                },
-                "database":"Items",
-                "key": "PARSHWAPUSHINGDATATOSERVER",
-                "source":"TAMPERPARSHWA"
-            }
+                    {
+                        "vegetarian":veg
+                    },
+                    {
+                        "vegan":vegan
+                    },
+                    {
+                        "tithi":"MAYBE"
+                    }
+                ],
+                "dietary":dietryList,
+                "name":productName,
+                "description":productDescription,
+                "categories":categoriesList,
+                "ingredients":ingredientsList,
+                "barcode": upcValues,
+                "weburl": cleanAmazonUrl(window.location.href),
+                "brand":"Unkown",
+                "images":imageSrcs,
+                "store":[
+                    "Amazon"
+                ]
+            },
+            "status":"NEW"
+        },
+        "database":"Items",
+        "key": "PARSHWAPUSHINGDATATOSERVER",
+        "source":"TAMPERPARSHWA"
+    }
 
-            // Convert JSON object to string with indentation
-            const productDetailsJson = JSON.stringify(productDetail, null, 2);
+    // Convert JSON object to string with indentation
+    const productDetailsJson = JSON.stringify(productDetail, null, 2);
 
-            // Output JSON to console
-            console.log('Product Details JSON:', productDetailsJson);
+    // Output JSON to console
+    console.log('Product Details JSON:', productDetailsJson);
 
 
 
-            // Create a floating display box
-            if (ingredients) {
+    // Create a floating display box
+    if (ingredients) {
 
-                const displayBox = document.createElement('div');
-                displayBox.id = 'display-box';
-                displayBox.style.position = 'fixed';
-                displayBox.style.top = '40px';
-                displayBox.style.right = '10px';
-                displayBox.style.padding = '10px';
-                displayBox.style.backgroundColor = '#ffffff';
-                displayBox.style.border = '1px solid #ddd';
-                displayBox.style.borderRadius = '5px';
-                displayBox.style.zIndex = '9999';
-                displayBox.style.maxWidth = '400px';
+        const displayBox = document.createElement('div');
+        displayBox.id = 'display-box';
+        displayBox.style.position = 'fixed';
+        displayBox.style.top = '40px';
+        displayBox.style.right = '10px';
+        displayBox.style.padding = '10px';
+        displayBox.style.backgroundColor = '#ffffff';
+        displayBox.style.border = '1px solid #ddd';
+        displayBox.style.borderRadius = '5px';
+        displayBox.style.zIndex = '9999';
+        displayBox.style.maxWidth = '400px';
 
-                displayBox.style.maxHeight = '700px';
-                displayBox.style.overflow = 'auto';
-                console.log(otherIngredientsAsJson);
+        displayBox.style.maxHeight = '700px';
+        displayBox.style.overflow = 'auto';
+        console.log(otherIngredientsAsJson);
 
-                displayBox.innerHTML = `
+        displayBox.innerHTML = `
                     <h3>Jain : ${jain}</h3>
                     <h3>Vegetarian : ${veg}</h3>
                     <h3>Vegan : ${vegan}</h3>
                     <h3>Ingredients:</h3>
                     <p>${displayIngredientsTable(otherIngredientsAsJson)}</p>
                 `;
-                document.body.appendChild(displayBox);
+        document.body.appendChild(displayBox);
 
-                // Optionally, create a button to copy JSON to clipboard
-                const copyButton = document.createElement('button');
-                copyButton.innerText = 'Save Product Details';
-                copyButton.id = 'save-button';
-                copyButton.style.backgroundColor = '#ADD8E6';
-                copyButton.style.border = '2px solid #ddd';
-                copyButton.style.borderRadius = '10px';
-                copyButton.style.textAlign = 'left';
-                copyButton.style.fontSize = '30px';
-                copyButton.style.zIndex = 9999;
-                displayBox.appendChild(copyButton);
+        console.log("displayButton: " + displayButton);
 
-                copyButton.addEventListener('click', function() {
-                    navigator.clipboard.writeText(productDetailsJson).then(function() {
+        if(displayButton) {
 
-                        // Show loading spinner first
-                        // Create and show a CSS loading spinner
-                        const loadingBox = document.createElement('div');
-                        loadingBox.id = 'loading-box';
-                        loadingBox.style.position = 'fixed';
-                        loadingBox.style.top = '40px';
-                        loadingBox.style.right = '10px';
-                        loadingBox.style.padding = '20px';
-                        loadingBox.style.backgroundColor = '#ffffff';
-                        loadingBox.style.border = '1px solid #ddd';
-                        loadingBox.style.borderRadius = '5px';
-                        loadingBox.style.zIndex = '10000';
-                        loadingBox.style.display = 'flex';
-                        loadingBox.style.justifyContent = 'center';
-                        loadingBox.style.alignItems = 'center';
-                        loadingBox.innerHTML = `<div style="
+            // Optionally, create a button to copy JSON to clipboard
+            const copyButton = document.createElement('button');
+            copyButton.innerText = 'Save Product Details';
+            copyButton.id = 'save-button';
+            copyButton.style.backgroundColor = '#ADD8E6';
+            copyButton.style.border = '2px solid #ddd';
+            copyButton.style.borderRadius = '10px';
+            copyButton.style.textAlign = 'left';
+            copyButton.style.fontSize = '30px';
+            copyButton.style.zIndex = 9999;
+            displayBox.appendChild(copyButton);
+
+            copyButton.addEventListener('click', function() {
+                navigator.clipboard.writeText(productDetailsJson).then(function() {
+
+                    // Show loading spinner first
+                    // Create and show a CSS loading spinner
+                    const loadingBox = document.createElement('div');
+                    loadingBox.id = 'loading-box';
+                    loadingBox.style.position = 'fixed';
+                    loadingBox.style.top = '40px';
+                    loadingBox.style.right = '10px';
+                    loadingBox.style.padding = '20px';
+                    loadingBox.style.backgroundColor = '#ffffff';
+                    loadingBox.style.border = '1px solid #ddd';
+                    loadingBox.style.borderRadius = '5px';
+                    loadingBox.style.zIndex = '10000';
+                    loadingBox.style.display = 'flex';
+                    loadingBox.style.justifyContent = 'center';
+                    loadingBox.style.alignItems = 'center';
+                    loadingBox.innerHTML = `<div style="
                                   width: 300px;
                                   height: 300px;
                                   border: 4px solid #ccc;
@@ -1535,105 +1597,189 @@ function cleanAmazonUrl(url) {
                                   "></div>
                                   `;
 
-                        document.body.appendChild(loadingBox);
-                        add(productDetail);
-                        navigator.clipboard.writeText(productDetailsJson);
+                    document.body.appendChild(loadingBox);
+                    add(productDetail);
+                    navigator.clipboard.writeText(productDetailsJson);
 
-                    }, function(err) {
-                        console.error('Could not copy text: ', err);
-                    });
+                }, function(err) {
+                    console.error('Could not copy text: ', err);
                 });
-            } else {
-                const displayBox = document.createElement('div');
-                displayBox.style.position = 'fixed';
-                displayBox.style.top = '10px';
-                displayBox.style.right = '10px';
-                displayBox.style.padding = '10px';
-                displayBox.style.backgroundColor = '#f8f8f8';
-                displayBox.style.border = '1px solid #ddd';
-                displayBox.style.borderRadius = '5px';
-                displayBox.style.zIndex = '9999';
-                displayBox.style.maxWidth = '400px';
-                displayBox.style.maxHeight = '500px';
-                displayBox.style.overflow = 'auto';
-
-                displayBox.innerHTML = `
-                     <h3>Ingredients:</h3>
-                    <p>Unable to find ingredients, please looks for another item.</p>
-                `;
-                document.body.appendChild(displayBox);
-
-            }
-        }
-
-
-        function convertToJsonArray(input) {
-            // Remove "Ingredients:" prefix and trailing period
-            const cleaned = input.replace(/^Ingredients:\s*/, '').replace(/\.$/, '');
-
-            // Split into ingredients while keeping parentheses content together
-            const result = [];
-            let current = '';
-            let depth = 0;
-
-            for (let char of cleaned) {
-                if (((char === ',' || char === ';') && depth === 0) || (char === ')' && depth === 1)) {
-                    if (depth === 1){depth--;current += ')'}
-                    if (current == ''){continue}
-                    current.replaceAll("  ", " ");
-                    result.push(current.trim());
-                    current = '';
-                } else {
-                    if (char === '(' || char === '[') depth++;
-                    if (char === ')' || char === ']') depth--;
-                    if (strTest(char)){
-                        if (char === '[') {
-                            current += '(';
-                        } else if (char === ']'){
-                            current += ')'
-                        } else {
-                            current += char;
-                        }
-                    }
-                }
-            }
-            while (depth != 0){current += ")"; depth--;}
-            if (current.trim()) result.push(current.trim());
-
-            // Normalize "and" before last ingredient
-            const finalList = result.map(item => item.replace(/^and\s+/i, '').trim());
-
-            // Convert to unified JSON format
-            const structured = finalList.map(item => {
-                const match = item.match(/^(.+?)\s*\((.*?)\)$/);
-                let tmp
-                if (match) {
-                    tmp = {
-                        name: match[1].trim().toLowerCase(),
-                        jain: "",
-                        vegetarian: "",
-                        vegan: "",
-                        subIngredients: convertToJsonArray(match[2])
-                    };
-                } else {
-                    tmp = {
-                        name: item.trim().toLowerCase(),
-                        jain: "",
-                        vegetarian: "",
-                        vegan: ""
-                    };
-                }
-                tmp.jain = computeJainSinglIngredient(tmp);
-                tmp.vegetarian = computeVegSinglIngredient(tmp);
-                tmp.vegan = computeVeganSinglIngredient(tmp);
-                return tmp;
             });
+        } else {
 
-
-
-            console.log("convertToJsonArray = " + JSON.stringify(structured, null, 3));
-            return structured;
         }
+    } else {
+        const displayBox = document.createElement('div');
+        displayBox.style.position = 'fixed';
+        displayBox.style.top = '10px';
+        displayBox.style.right = '10px';
+        displayBox.style.padding = '10px';
+        displayBox.style.backgroundColor = '#f8f8f8';
+        displayBox.style.border = '1px solid #ddd';
+        displayBox.style.borderRadius = '5px';
+        displayBox.style.zIndex = '9999';
+        displayBox.style.maxWidth = '400px';
+        displayBox.style.maxHeight = '500px';
+        displayBox.style.overflow = 'auto';
+
+        displayBox.innerHTML = `
+                     <h3>Ingredients:</h3>
+                    <p>Unable to find ingredients, please look for another item.</p>
+                `;
+        document.body.appendChild(displayBox);
+
+    }
+}
+
+function convertToJsonArraySub(input, parent){
+    // Remove "Ingredients:" prefix and trailing period
+    const cleaned = input.replace(/^Ingredients:\s*/, '').replace(/\.$/, '');
+
+    // Split into ingredients while keeping parentheses content together
+    const result = [];
+    let current = '';
+    let depth = 0;
+
+    for (let char of cleaned) {
+        if (((char === ',' || char === ';') && depth === 0) || (char === ')' && depth === 1)) {
+            if (depth === 1){depth--;current += ')'}
+            if (current == ''){continue}
+            current.replaceAll("  ", " ");
+            result.push(current.trim());
+            current = '';
+        } else {
+            if (char === '(' || char === '[') depth++;
+            if (char === ')' || char === ']') depth--;
+            if (strTest(char)){
+                if (char === '[') {
+                    current += '(';
+                } else if (char === ']'){
+                    current += ')'
+                } else {
+                    current += char;
+                }
+            }
+        }
+    }
+    while (depth != 0){current += ")"; depth--;}
+    if (current.trim()) result.push(current.trim());
+
+    // Normalize "and" before last ingredient
+    const finalList = result.map(item => item.replace(/^and\s+/i, '').trim());
+
+    // Convert to unified JSON format
+    const structured = finalList.map(item => {
+        const match = item.match(/^(.+?)\s*\((.*?)\)$/);
+        let tmp = {
+                name: "",
+                jain: "",
+                vegetarian: "",
+                vegan: "",
+                subIngredients: null
+            };
+        if (match){
+            tmp.name = match[1].trim().toLowerCase();
+        }else{
+            tmp.name = item.trim().toLowerCase();
+        }
+        if (parent.jain === "YES"){
+            tmp.jain = parent.jain;
+        }else{
+            tmp.jain = computeJainSinglIngredient(tmp);
+        }
+        if (parent.vegetarian === "YES"){
+            tmp.vegetarian = parent.vegetarian;
+        }else{
+            tmp.vegetarian = computeVegSinglIngredient(tmp);
+        }
+        if (parent.vegan === "YES"){
+            tmp.vegan = parent.vegan;
+        }else{
+            tmp.vegan = computeVeganSinglIngredient(tmp);
+        }
+        if (match) {
+            tmp.subIngredients = convertToJsonArraySub(match[2], tmp);
+        }
+        if (tmp.name === "emulsifier")
+        {
+            tmp.jain = parent.jain;
+            tmp.vegan = parent.vegan;
+            tmp.vegetarian = parent.vegetarian;
+        }
+        return tmp;
+    });
+
+
+
+    console.log("convertToJsonArray = " + JSON.stringify(structured, null, 3));
+    return structured;
+}
+
+function convertToJsonArray(input) {
+    // Remove "Ingredients:" prefix and trailing period
+    const cleaned = input.replace(/^Ingredients:\s*/, '').replace(/\.$/, '');
+
+    // Split into ingredients while keeping parentheses content together
+    const result = [];
+    let current = '';
+    let depth = 0;
+
+    for (let char of cleaned) {
+        if (((char === ',' || char === ';') && depth === 0) || (char === ')' && depth === 1)) {
+            if (depth === 1){depth--;current += ')'}
+            if (current == ''){continue}
+            current.replaceAll("  ", " ");
+            result.push(current.trim());
+            current = '';
+        } else {
+            if (char === '(' || char === '[') depth++;
+            if (char === ')' || char === ']') depth--;
+            if (strTest(char)){
+                if (char === '[') {
+                    current += '(';
+                } else if (char === ']'){
+                    current += ')'
+                } else {
+                    current += char;
+                }
+            }
+        }
+    }
+    while (depth != 0){current += ")"; depth--;}
+    if (current.trim()) result.push(current.trim());
+
+    // Normalize "and" before last ingredient
+    const finalList = result.map(item => item.replace(/^and\s+/i, '').trim());
+
+    // Convert to unified JSON format
+    const structured = finalList.map(item => {
+        const match = item.match(/^(.+?)\s*\((.*?)\)$/);
+        let tmp = {
+                name: "",
+                jain: "",
+                vegetarian: "",
+                vegan: "",
+                subIngredients: null
+            };
+        if (match){
+            tmp.name = match[1].trim().toLowerCase();
+        }else{
+            tmp.name = item.trim().toLowerCase();
+        }
+        tmp.jain = computeJainSinglIngredient(tmp);
+        tmp.vegetarian = computeVegSinglIngredient(tmp);
+        tmp.vegan = computeVeganSinglIngredient(tmp);
+        if (match) {
+            tmp.subIngredients = convertToJsonArraySub(match[2], tmp);
+        }
+        return tmp;
+    });
+
+
+
+    console.log("convertToJsonArray = " + JSON.stringify(structured, null, 3));
+    return structured;
+}
 
 (function() {
     'use strict';
