@@ -46,6 +46,10 @@ function callback(error, responseJson) {
 }
 
 function add(data){
+    let username = localStorage.getItem('par-username');
+    let secret = localStorage.getItem('par-secret');
+    data["key"] = username + '--' + secret;
+    data["addedBy"] = username;
     var request = new XMLHttpRequest();
 
     request.onload = function () {
@@ -250,7 +254,6 @@ var jainIngredients = [
   "moong dal",
   "mustard oil",
   "mustard seeds",
-  "natural flavor",
   "oats",
   "olive oil",
   "oranges",
@@ -450,6 +453,7 @@ var nonJainIngredients = [
   "alpha tocopherol acetate",
   "vitamin e",
   "vitamin a palmitate",
+  "natural flavor",
 ];
 
 var veganIngredients = [
@@ -892,7 +896,6 @@ var vegetarianIngredients = [
   "moong dal",
   "mustard oil",
   "mustard seeds",
-  "natural flavor",
   "oats",
   "oca",
   "olive oil",
@@ -1027,6 +1030,7 @@ var notVegetarianIngredients = [
     "chicken",
     "pork",
     "turkey",
+    "natural flavor",
 ];
 
 var allIngredients = [].concat(notVegetarianIngredients,vegetarianIngredients,veganIngredients,nonVeganIngredients,nonJainIngredients,notVegetarianIngredients,jainIngredients)
@@ -1046,7 +1050,7 @@ function computeJainSinglIngredient (ingredient) {
         var isJainValue = isJain(ingredient.name);
         var isNotJainValue = isNonJain(ingredient.name);
         if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
-            var subJain = computeJain(ingredient.subIngredients)
+            var subJain = computeJain(ingredient.subIngredients);
             if (subJain === "NO") { // if subIngredient is not jain
                 return "NO";
             } else if (subJain === "YES") { // if subIngredient is jain
@@ -1094,7 +1098,7 @@ function computeJain (ingredients) {
         if(stop) {continue}
         var ingredient = ingredients [i];
         if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
-            let subJain = computeJainSinglIngredient(ingredients[i]);
+            let subJain = ingredients[i].jain;
             if (subJain === "NO") { // if subIngredient is not jain
                 allJain = allJain && false;
                 return "NO";
@@ -1104,7 +1108,7 @@ function computeJain (ingredients) {
                 allJain = allJain && false;
             }
         } else {
-            let a = computeJainSinglIngredient(ingredients[i]);
+            let a = ingredients[i].jain;
             if (a === "NO") {
                 allJain = allJain && false;
                 return "NO";
@@ -1189,7 +1193,7 @@ function computeVeg (ingredients) {
     for (let i in ingredients) {
         let ing = ingredients[i];
         if (ing.subIngredients) {
-            let subVeg = computeVegSinglIngredient(ingredients[i]);
+            let subVeg = ingredients[i].vegetarian;
             if (subVeg === "NO"){
                 return "NO";
             } else if(subVeg === "YES"){
@@ -1199,7 +1203,7 @@ function computeVeg (ingredients) {
             }
             continue;
         }
-        let isVeg = computeVegSinglIngredient(ingredients[i]);
+        let isVeg = ingredients[i].vegetarian;
         if (isVeg == "YES") {
             veg &= true;
         }
@@ -1278,7 +1282,7 @@ function computeVegan(ingredients){
     for (let i in ingredients) {
         let ing = ingredients[i];
         if (ing.subIngredients) {
-            let subVeg = computeVeganSinglIngredient(ingredients[i]);
+            let subVeg = ingredients[i].vegan;
             if (subVeg === "NO"){
                 return "NO";
             } else if(subVeg === "YES"){
@@ -1288,7 +1292,7 @@ function computeVegan(ingredients){
             }
             continue
         }
-        let isVegan = computeVeganSinglIngredient(ingredients[i]);
+        let isVegan = ingredients[i].vegan;
         if (isVegan == "YES") {
             veg &= true;
         }
@@ -1517,7 +1521,6 @@ function extractIngredients() {
             "status":"NEW"
         },
         "database":"Items",
-        "key": "PARSHWAPUSHINGDATATOSERVER",
         "source":"TAMPERPARSHWA"
     }
 
@@ -1574,6 +1577,80 @@ function extractIngredients() {
             displayBox.appendChild(copyButton);
 
             copyButton.addEventListener('click', function() {
+                let worked = false;
+                let username = localStorage.getItem('par-username');
+                let secret = localStorage.getItem('par-secret');
+
+                function sendRequest(user, pass) {
+                    var request = new XMLHttpRequest();
+                    request.open('POST', 'https://mainserver-776168167171.us-west1.run.app/v1/login', true);
+                    request.setRequestHeader('Content-Type', 'application/json');
+
+                    request.onreadystatechange = function () {
+                        if (request.readyState === 4) {
+                            if (request.status === 200 && request.responseText.trim() === 'GOOD') {
+                                localStorage.setItem('par-username', user);
+                                localStorage.setItem('par-secret', pass);
+                                alert('Authenticated successfully!');
+                                worked = true;
+                                navigator.clipboard.writeText(productDetailsJson).then(function() {
+
+                                    // Show loading spinner first
+                                    // Create and show a CSS loading spinner
+                                    const loadingBox = document.createElement('div');
+                                    loadingBox.id = 'loading-box';
+                                    loadingBox.style.position = 'fixed';
+                                    loadingBox.style.top = '40px';
+                                    loadingBox.style.right = '10px';
+                                    loadingBox.style.padding = '20px';
+                                    loadingBox.style.backgroundColor = '#ffffff';
+                                    loadingBox.style.border = '1px solid #ddd';
+                                    loadingBox.style.borderRadius = '5px';
+                                    loadingBox.style.zIndex = '10000';
+                                    loadingBox.style.display = 'flex';
+                                    loadingBox.style.justifyContent = 'center';
+                                    loadingBox.style.alignItems = 'center';
+                                    loadingBox.innerHTML = `<div style="
+                                  width: 300px;
+                                  height: 300px;
+                                  border: 4px solid #ccc;
+                                  border-top: 4px solid #3498db;
+                                  border-radius: 50%;
+                                  animation: spin 1s linear infinite;
+                                  "></div>
+                                  `;
+
+                                    document.body.appendChild(loadingBox);
+                                    add(productDetail);
+                                    navigator.clipboard.writeText(productDetailsJson);
+
+                                }, function(err) {
+                                    console.error('Could not copy text: ', err);
+                                });
+                            } else {
+                                alert('Authentication failed. You messed up.');
+                            }
+                        }
+                    };
+
+                    var data = JSON.stringify({ key: user+'--'+pass });
+                    request.send(data);
+                }
+
+                if (!username || !secret) {
+                    username = prompt('Enter your username:');
+                    secret = prompt('Enter your password:');
+
+                    if (!username || !secret) {
+                        alert('Username and password are required.');
+                        return;
+                    }
+                }
+
+                sendRequest(username, secret);
+                if (!worked){
+                    return;
+                }
                 navigator.clipboard.writeText(productDetailsJson).then(function() {
 
                     // Show loading spinner first
@@ -1635,7 +1712,7 @@ function extractIngredients() {
     }
 }
 
-function convertToJsonArraySub(input, parent){
+function convertToJsonArraySub(input){
     // Remove "Ingredients:" prefix and trailing period
     const cleaned = input.replace(/^Ingredients:\s*/, '').replace(/\.$/, '');
 
@@ -1671,52 +1748,52 @@ function convertToJsonArraySub(input, parent){
     // Normalize "and" before last ingredient
     const finalList = result.map(item => item.replace(/^and\s+/i, '').trim());
 
+    let isSpecialCase = false;
+    let specialCaseData = undefined;
+
     // Convert to unified JSON format
     const structured = finalList.map(item => {
         const match = item.match(/^(.+?)\s*\((.*?)\)$/);
+        let isSpecialCase2, specialCaseData2, subIngredients;
         let tmp = {
                 name: "",
-                jain: "",
-                vegetarian: "",
-                vegan: "",
+                jain: null,
+                vegetarian: null,
+                vegan: null,
                 subIngredients: null
             };
         if (match){
             tmp.name = match[1].trim().toLowerCase();
+            subIngredients, isSpecialCase2, specialCaseData2 = convertToJsonArraySub(match[2]);
+            tmp.subIngredients = subIngredients;
         }else{
             tmp.name = item.trim().toLowerCase();
         }
-        if (parent.jain === "YES"){
-            tmp.jain = parent.jain;
-        }else{
-            tmp.jain = computeJainSinglIngredient(tmp);
-        }
-        if (parent.vegetarian === "YES"){
-            tmp.vegetarian = parent.vegetarian;
-        }else{
-            tmp.vegetarian = computeVegSinglIngredient(tmp);
-        }
-        if (parent.vegan === "YES"){
-            tmp.vegan = parent.vegan;
-        }else{
-            tmp.vegan = computeVeganSinglIngredient(tmp);
-        }
-        if (match) {
-            tmp.subIngredients = convertToJsonArraySub(match[2], tmp);
+        tmp.jain = computeJainSinglIngredient(tmp);
+        tmp.vegetarian = computeVegSinglIngredient(tmp);
+        tmp.vegan = computeVeganSinglIngredient(tmp);
+        if(isSpecialCase2){
+            let emulsifier = {
+                name: "emulsifier",
+                jain: tmp.jain,
+                vegetarian: tmp.vegetarian,
+                vegan: tmp.vegan,
+                subIngredients: specialCaseData2
+            };
         }
         if (tmp.name === "emulsifier")
         {
-            tmp.jain = parent.jain;
-            tmp.vegan = parent.vegan;
-            tmp.vegetarian = parent.vegetarian;
+            isSpecialCase = true;
+            if(match){
+                specialCaseData = tmp.subIngredients;
+            }
+        }else{
+            return tmp;
         }
-        return tmp;
     });
 
-
-
     console.log("convertToJsonArray = " + JSON.stringify(structured, null, 3));
-    return structured;
+    return (structured, isSpecialCase, specialCaseData);
 }
 
 function convertToJsonArray(input) {
@@ -1760,21 +1837,31 @@ function convertToJsonArray(input) {
         const match = item.match(/^(.+?)\s*\((.*?)\)$/);
         let tmp = {
                 name: "",
-                jain: "",
-                vegetarian: "",
-                vegan: "",
-                subIngredients: null
+                jain: null,
+                vegetarian: null,
+                vegan: null,
+                subIngredients: null,
             };
+        let isSpecialCase2, specialCaseData2, subIngredients;
         if (match){
             tmp.name = match[1].trim().toLowerCase();
+            subIngredients, isSpecialCase2, specialCaseData2 = convertToJsonArraySub(match[2]);
+            tmp.subIngredients = subIngredients;
         }else{
             tmp.name = item.trim().toLowerCase();
         }
         tmp.jain = computeJainSinglIngredient(tmp);
         tmp.vegetarian = computeVegSinglIngredient(tmp);
         tmp.vegan = computeVeganSinglIngredient(tmp);
-        if (match) {
-            tmp.subIngredients = convertToJsonArraySub(match[2], tmp);
+        if(isSpecialCase2){
+            let emulsifier = {
+                name: "emulsifier",
+                jain: tmp.jain,
+                vegetarian: tmp.vegetarian,
+                vegan: tmp.vegan,
+                subIngredients: specialCaseData2
+            };
+            tmp.subIngredients.append(emulsifier);
         }
         return tmp;
     });
