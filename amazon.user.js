@@ -151,7 +151,7 @@ console.log("Confidence:", result.confidence);
 
 */
 
-
+// bookmark closest pair logic above
 var jainIngredients = [
   "agar",
   "almonds",
@@ -388,8 +388,23 @@ var jainIngredients = [
   "sesame seed",
   "celery seed",
   "plantain",
+  "distilled white vinegar",
+  "molasses",
+  "vinegar",
+  "liquid smoke",
+  "vitamin e acetate",
+  "niacinamide",
+  "vitamin b6",
+  "pyridoxine hydrochloride",
+  "vitamin b2",
+  "riboflavin",
+  "vitamin b1",
+  "vitamin c",
+  "alpha tocopherol acetate",
+  "leavening",
+  "paprika oleoresin"
 ];
-
+// bookmark jain ingredients end
 var nonJainIngredients = [
   "apios",
   "arrowroot",
@@ -454,8 +469,14 @@ var nonJainIngredients = [
   "vitamin e",
   "vitamin a palmitate",
   "natural flavor",
+  "vitamin a",
+  "vitamin a palmitate",
+  "vitamin b12",
+  "vitamin d3",
+  "cajun sesame sticks",
+  "cajun seasoning"
 ];
-
+// bookmark non jain ingredients end
 var veganIngredients = [
   "agar",
   "almonds",
@@ -707,62 +728,310 @@ var veganIngredients = [
   "sesame seed",
   "spirulina",
   "plantain",
+  "distilled white vinegar",
+  "molasses",
+  "vinegar",
+  "liquid smoke",
+  "vitamin e acetate",
+  "niacinamide",
+  "vitamin b6",
+  "pyridoxine hydrochloride",
+  "vitamin b2",
+  "riboflavin",
+  "vitamin b1",
+  "vitamin c",
+  "alpha tocopherol acetate",
+  "leavening",
+  "paprika oleoresin"
 ];
-
+//bookmark vegan ingredients end
 
 var nonVeganIngredients = [
+  "adrenaline",
+  "afterbirth",
+  "alanine",
+  "albumen",
+  "albumin",
+  "alcloxa",
+  "aldioxa",
+  "aliphatic alcohol",
+  "allantoin",
+  "alligator skin",
+  "alpha tocopherol acetate",
+  "alpha-hydroxy acids",
+  "ambergris",
+  "amino acids",
+  "aminosuccinate acid",
+  "angora",
+  "animal fats and oils",
+  "animal hair",
+  "arachidonic acid",
+  "arachidyl proprionate",
   "artificial color",
   "artificial flavor",
+  "bee pollen",
+  "bee products",
+  "beeswax",
+  "beta carotene",
+  "biotin",
+  "blood",
+  "boar bristles",
+  "bacon",
+  "bone char",
+  "bone meal",
   "butter",
   "buttermilk",
+  "butteroil",
+  "calciferol",
+  "calfskin",
+  "capryl betaine",
+  "caprylamine oxide",
+  "caprylic acid",
+  "caprylic triglyceride",
+  "carbamide",
+  "carmine",
+  "carminic acid",
+  "carotene",
+  "casein",
+  "caseinate",
+  "cashmere",
+  "castor",
+  "castoreum",
+  "catgut",
+  "cera flava",
+  "cerebrosides",
   "cheddar cheese",
+  "cheddar cheese blend",
+  "cheese",
+  "cheese crunchies enriched ground corn flour",
+  "chitosan",
   "chocolate",
+  "cholesterin",
+  "cholesterol",
+  "choline bitartrate",
+  "civet",
   "clarified butter",
+  "cochineal",
+  "cod liver oil",
+  "collagen",
   "color",
+  "colors",
+  "confectioners glaze",
+  "corticosteroid",
+  "cortisone",
   "cottage cheese",
   "cream",
   "curd",
+  "cysteine",
+  "cystine",
   "dark chocolate",
+  "dexpanthenol",
+  "diglycerides",
+  "dimethyl stearamine",
+  "down",
   "dour cream",
+  "duodenum substances",
+  "dyes",
   "egg",
+  "egg protein",
   "egg whites",
   "eggs",
-  "ghee",
+  "elastin",
+  "emu oil",
+  "enzymes",
+  "ergocalciferol",
+  "ergosterol",
+  "estradiol",
+  "estrogen",
+  "fats",
+  "fatty acids",
+  "fd&c colors",
+  "feathers",
+  "fish liver oil",
+  "fish oil",
+  "fish scales",
+  "fur",
+  "gel",
+  "gelatin",
+  "glucose tyrosinase",
+  "glycerides",
+  "glycerin",
   "glycerine",
+  "glycerol",
+  "glyceryls",
+  "glycreth-26",
+  "guanine",
+  "hide glue",
+  "honey",
+  "honeycomb",
+  "horsehair",
+  "hyaluronic acid",
+  "hydrocortisone",
+  "hydrolyzed animal protein",
+  "imidazolidinyl urea",
   "includes blue 1 lake",
+  "insulin",
+  "isinglass",
+  "isopropyl lanolate",
+  "isopropyl myristate",
+  "isopropyl palmitate",
+  "keratin",
+  "l-form",
+  "lactic acid",
   "lactose",
+  "laneth",
+  "lanogene",
+  "lanolin",
+  "lanolin acids",
+  "lanolin alcohol",
+  "lanosterols",
+  "lard",
   "lecithin",
+  "leather",
   "less than 2% - lactose",
+  "linoleic acid",
+  "lipase",
+  "lipids",
+  "lipoids",
+  "marine oil",
+  "methionine",
   "milk",
+  "milk protein",
   "milkfat",
-  "diglycerides",
+  "mink oil",
   "monoglycerides",
+  "musk (oil)",
+  "myristal ether sulfate",
+  "myristic acid",
+  "myristyls",
+  "nachos",
   "natural flavor",
+  "nucleic acids",
+  "ocenol",
+  "octyl dodecanol",
+  "oils",
+  "oleic acid",
+  "oleths",
+  "oleyl alcohol",
+  "oleyl arachidate",
+  "oleyl imidazoline",
+  "oleyl myristate",
+  "oleyl oleate",
+  "oleyl stearate",
+  "other types of skin",
+  "palmitamide",
+  "palmitamine",
+  "palmitate",
+  "palmitic acid",
   "paneer",
+  "panthenol",
+  "panthenyl",
+  "pearl essence",
+  "pepsin",
   "pgpr",
+  "placenta",
+  "placenta polypeptides protein",
+  "polyglycerol",
+  "polypeptides",
+  "polysorbates",
+  "pristane",
+  "progesterone",
+  "propolis",
+  "provitamin a",
+  "provitamin b-5",
+  "provitamin d 2",
+  "provitamin d-2",
+  "rennet",
+  "rennin",
+  "resinous glaze",
+  "retinol",
+  "riboflavin",
+  "ribonucleic acid",
+  "rna",
+  "royal jelly",
+  "sable brushes",
+  "saturated fat",
+  "saturated fats",
+  "saturated fatty acids",
+  "saturated oils",
+  "saturated wax",
+  "saturated waxes",
+  "saturated wax-like compounds",
+  "sea turtle oil",
+  "shark liver oil",
+  "sheepskin",
+  "shellac",
+  "silk",
+  "silk powder",
   "skim milk",
+  "snails",
+  "sodium caseinate",
+  "sodium steroyl lactylate",
+  "sodium tallowate",
   "sour cream",
+  "sperm oil",
+  "spermaceti",
+  "sponge (luna and sea)",
+  "squalane",
+  "squalene",
+  "stearamide",
+  "stearamine",
+  "stearamine oxide",
+  "stearates",
+  "stearic acid",
+  "stearic hydrazide",
+  "stearone",
+  "stearoxytrimethylsilane",
+  "stearoyl lactylic acid",
+  "stearyl acetate",
+  "stearyl alcohol",
+  "stearyl betaine",
+  "stearyl caprylate",
+  "stearyl citrate",
+  "stearyl glycyrrhetinate",
+  "stearyl heptanoate",
+  "stearyl imidazoline",
+  "stearyl octanoate",
+  "stearyl stearate",
+  "stearyldimethyl amine",
+  "steroids",
+  "sterols",
+  "suede",
+  "tallow",
+  "tallow acid",
+  "tallow amide",
+  "tallow amine",
+  "tallow fatty alcohol",
+  "tallow glycerides",
+  "tallow imidazoline",
+  "talloweth-6",
+  "triterpene alcohols",
+  "turkey",
+  "turtle oil",
+  "tyrosine",
   "unsweetened chocolate",
+  "urea",
+  "uric acid",
+  "vitamin a",
+  "vitamin a palmitate",
+  "vitamin b 12",
+  "vitamin b12",
+  "vitamin b factor",
+  "vitamin b-complex factor",
+  "vitamin d",
+  "vitamin d 2",
+  "vitamin d3",
+  "vitamin e",
+  "vitamin h",
+  "wax",
   "whey",
   "whole milk powder",
-  "yogurt",
-  "confectioners glaze",
-  "beeswax",
-  "butteroil",
-  "bacon",
-  "nachos",
-  "cheese crunchies enriched ground corn flour",
-  "riboflavin",
-  "cheddar cheese blend",
-  "cheese",
-  "enzymes",
-  "gelatin",
-  "alpha tocopherol acetate",
-  "vitamin e",
-  "vitamin a palmitate",
-  "turkey",
+  "wool",
+  "wool fat",
+  "wool wax",
+  "yogurt"
 ];
-
+//bookmark non vegan ingredients end
 var vegetarianIngredients = [
   "agar",
   "almonds",
@@ -1011,8 +1280,29 @@ var vegetarianIngredients = [
   "vitamin a palmitate",
   "celery seed",
   "plantain",
+  "distilled white vinegar",
+  "molasses",
+  "vinegar",
+  "liquid smoke",
+  "vitamin e acetate",
+  "niacinamide",
+  "vitamin b6",
+  "pyridoxine hydrochloride",
+  "vitamin b2",
+  "riboflavin",
+  "vitamin b1",
+  "vitamin a",
+  "vitamin a palmitate",
+  "vitamin b12",
+  "vitamin d3",
+  "vitamin c",
+  "alpha tocopherol acetate",
+  "leavening",
+  "cajun sesame sticks",
+  "cajun seasoning",
+  "paprika oleoresin"
 ];
-
+//bookmark vegitarian ingredients end
 var notVegetarianIngredients = [
     "egg",
     "egg whites",
@@ -1032,6 +1322,7 @@ var notVegetarianIngredients = [
     "turkey",
     "natural flavor",
 ];
+//bookmark non vegitarian ingredients end
 
 var allIngredients = [].concat(notVegetarianIngredients,vegetarianIngredients,veganIngredients,nonVeganIngredients,nonJainIngredients,notVegetarianIngredients,jainIngredients)
 
@@ -1046,7 +1337,13 @@ function isNonJain(ingredientName){
 
 function computeJainSinglIngredient (ingredient) {
     if(ingredient && ingredient.name) {
-        var vegSingle = computeVegSinglIngredient(ingredient);
+        if (ingredient.jain !== null){
+            return ingredient.jain;
+        }
+        var vegSingle = ingredient.vegetarian;
+        if (vegSingle == null){
+            vegSingle = computeVegSinglIngredient(ingredient);
+        }
         var isJainValue = isJain(ingredient.name);
         var isNotJainValue = isNonJain(ingredient.name);
         if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
@@ -1068,15 +1365,15 @@ function computeJainSinglIngredient (ingredient) {
         } else if (isNotJainValue || vegSingle === "NO") {// if ingredient is non vegetarian or non jain
             return "NO";
         } else { // not sure it is jain or not.
-            let tmp = null;
-            tmp = findNearestIngredientMatchWithConfidence( jainIngredients, ingredient.name );
-            if (tmp.confidence > 0.9){
-                console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+            let nearestMatchIngredient = null;
+            nearestMatchIngredient = findNearestIngredientMatchWithConfidence( jainIngredients, ingredient.name );
+            if (nearestMatchIngredient.confidence > 0.9){
+                console.log(`${ingredient.name} to ${nearestMatchIngredient.match} with confidence ${nearestMatchIngredient.confidence}`);
                 return "YES";
             } else {
-                tmp = findNearestIngredientMatchWithConfidence( nonJainIngredients, ingredient.name );
-                if (tmp.confidence > 0.9){
-                    console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+                nearestMatchIngredient = findNearestIngredientMatchWithConfidence( nonJainIngredients, ingredient.name );
+                if (nearestMatchIngredient.confidence > 0.9){
+                    console.log(`${ingredient.name} to ${nearestMatchIngredient.match} with confidence ${nearestMatchIngredient.confidence}`);
                     return "NO";
                 } else {
                     return "MAYBE";
@@ -1098,6 +1395,9 @@ function computeJain (ingredients) {
         if(stop) {continue}
         var ingredient = ingredients [i];
         if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
+            if(ingredients[i].jain == null){
+                ingredients[i].jain = computeJainSinglIngredient(ingredients[i]);
+            }
             let subJain = ingredients[i].jain;
             if (subJain === "NO") { // if subIngredient is not jain
                 allJain = allJain && false;
@@ -1108,13 +1408,16 @@ function computeJain (ingredients) {
                 allJain = allJain && false;
             }
         } else {
-            let a = ingredients[i].jain;
-            if (a === "NO") {
+            if(ingredients[i].jain == null){
+                ingredients[i].jain = computeJainSinglIngredient(ingredients[i]);
+            }
+            let jainVal = ingredients[i].jain;
+            if (jainVal === "NO") {
                 allJain = allJain && false;
                 return "NO";
-            } else if (a === "YES") {
+            } else if (jainVal === "YES") {
                 allJain = allJain && true;
-            } else if (a === "MAYBE") {
+            } else if (jainVal === "MAYBE") {
                 allJain = allJain && false;
             }
         }
@@ -1141,6 +1444,9 @@ function isVegetarian(ingredientName){
 }
 
 function computeVegSinglIngredient (ingredient) {
+    if (ingredient.vegetarian){
+        return ingredient.vegetarian;
+    }
     let isVeg = "MAYBE";
     if (ingredient.subIngredients) {
         let isVeg = computeVeg(ingredient.subIngredients);
@@ -1193,6 +1499,9 @@ function computeVeg (ingredients) {
     for (let i in ingredients) {
         let ing = ingredients[i];
         if (ing.subIngredients) {
+            if (ingredients[i].vegetarian == null){
+                ingredients[i].vegetarian = computeVegSinglIngredient(ingredients[i]);
+            }
             let subVeg = ingredients[i].vegetarian;
             if (subVeg === "NO"){
                 return "NO";
@@ -1202,6 +1511,9 @@ function computeVeg (ingredients) {
                 maybe = maybe || true;
             }
             continue;
+        }
+        if (ingredients[i].vegetarian == null){
+            ingredients[i].vegetarian = computeVegSinglIngredient(ingredients[i]);
         }
         let isVeg = ingredients[i].vegetarian;
         if (isVeg == "YES") {
@@ -1234,9 +1546,16 @@ function computeVeg (ingredients) {
 
 function computeVeganSinglIngredient(ingredient){
     if (ingredient && ingredient.name){
+        if (ingredient.vegan !== null){
+            return ingredient.vegan;
+        }
+        var vegSingle = ingredient.vegetarian;
+        if (vegSingle == null){
+            vegSingle = computeVegSinglIngredient(ingredient);
+        }
         var isVeganVal = isVegan(ingredient.name);
-        var isNonVeganVal = isNonVegan(ingredient.name)
-        var vegSingle = computeVegSinglIngredient(ingredient);
+        var isNonVeganVal = isNonVegan(ingredient.name);
+
         if (ingredient.subIngredients) {
             var subVegan = computeVegan(ingredient.subIngredients)
             if (subVegan === "NO") { // if subIngredient is not jain
@@ -1258,15 +1577,15 @@ function computeVeganSinglIngredient(ingredient){
         } else if (isNonVeganVal || vegSingle === "NO"){
             return "NO";
         } else {
-            let tmp = null;
-            tmp = findNearestIngredientMatchWithConfidence( veganIngredients, ingredient.name );
-            if (tmp.confidence > 0.9){
-                console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+            let nearestIngredient = null;
+            nearestIngredient = findNearestIngredientMatchWithConfidence( veganIngredients, ingredient.name );
+            if (nearestIngredient.confidence > 0.9){
+                console.log(`${ingredient.name} to ${nearestIngredient.match} with confidence ${nearestIngredient.confidence}`);
                 return "YES";
             } else {
-                tmp = findNearestIngredientMatchWithConfidence( nonVeganIngredients, ingredient.name );
-                if (tmp.confidence > 0.9){
-                    console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
+                nearestIngredient = findNearestIngredientMatchWithConfidence( nonVeganIngredients, ingredient.name );
+                if (nearestIngredient.confidence > 0.9){
+                    console.log(`${ingredient.name} to ${nearestIngredient.match} with confidence ${nearestIngredient.confidence}`);
                     return "NO";
                 }
                 return "MAYBE";
@@ -1282,6 +1601,9 @@ function computeVegan(ingredients){
     for (let i in ingredients) {
         let ing = ingredients[i];
         if (ing.subIngredients) {
+            if (ingredients[i].vegan == null){
+                ingredients[i].vegan = computeVeganSinglIngredient(ingredients[i]);
+            }
             let subVeg = ingredients[i].vegan;
             if (subVeg === "NO"){
                 return "NO";
@@ -1291,6 +1613,9 @@ function computeVegan(ingredients){
                 maybe = maybe || true;
             }
             continue
+        }
+        if (ingredients[i].vegan == null){
+            ingredients[i].vegan = computeVeganSinglIngredient(ingredients[i]);
         }
         let isVegan = ingredients[i].vegan;
         if (isVegan == "YES") {
@@ -1591,9 +1916,9 @@ function extractIngredients() {
                             if (request.status === 200 && request.responseText.trim() === 'GOOD') {
                                 localStorage.setItem('par-username', user);
                                 localStorage.setItem('par-secret', pass);
-                                alert('Authenticated successfully!');
+                                //alert('Authenticated successfully!');
                                 worked = true;
-                                navigator.clipboard.writeText(productDetailsJson).then(function() {
+                                navigator.clipboard.writeText("").then(function() {
 
                                     // Show loading spinner first
                                     // Create and show a CSS loading spinner
@@ -1622,7 +1947,7 @@ function extractIngredients() {
 
                                     document.body.appendChild(loadingBox);
                                     add(productDetail);
-                                    navigator.clipboard.writeText(productDetailsJson);
+                                    //navigator.clipboard.writeText(productDetailsJson);
 
                                 }, function(err) {
                                     console.error('Could not copy text: ', err);
@@ -1680,7 +2005,7 @@ function extractIngredients() {
 
                     document.body.appendChild(loadingBox);
                     add(productDetail);
-                    navigator.clipboard.writeText(productDetailsJson);
+                    //navigator.clipboard.writeText(productDetailsJson);
 
                 }, function(err) {
                     console.error('Could not copy text: ', err);
@@ -1755,7 +2080,7 @@ function convertToJsonArraySub(input){
     const structured = finalList.map(item => {
         const match = item.match(/^(.+?)\s*\((.*?)\)$/);
         let isSpecialCase2, specialCaseData2, subIngredients;
-        let tmp = {
+        let ingredient = {
                 name: "",
                 jain: null,
                 vegetarian: null,
@@ -1763,39 +2088,39 @@ function convertToJsonArraySub(input){
                 subIngredients: null
             };
         if (match){
-            tmp.name = match[1].trim().toLowerCase();
+            ingredient.name = match[1].trim().toLowerCase();
             subIngredients, isSpecialCase2, specialCaseData2 = convertToJsonArraySub(match[2]);
-            tmp.subIngredients = subIngredients;
+            ingredient.subIngredients = subIngredients;
         }else{
-            tmp.name = item.trim().toLowerCase();
+            ingredient.name = item.trim().toLowerCase();
         }
-        tmp.jain = computeJainSinglIngredient(tmp);
-        tmp.vegetarian = computeVegSinglIngredient(tmp);
-        tmp.vegan = computeVeganSinglIngredient(tmp);
+        ingredient.vegan = computeVeganSinglIngredient(ingredient);
+        ingredient.vegetarian = computeVegSinglIngredient(ingredient);
+        ingredient.jain = computeJainSinglIngredient(ingredient);
         if(isSpecialCase2){
             let emulsifier = {
                 name: "emulsifier",
-                jain: tmp.jain,
-                vegetarian: tmp.vegetarian,
-                vegan: tmp.vegan,
+                jain: ingredient.jain,
+                vegetarian: ingredient.vegetarian,
+                vegan: ingredient.vegan,
                 subIngredients: specialCaseData2
             };
         }
-        if (tmp.name === "emulsifier")
+        if (ingredient.name === "emulsifier")
         {
             isSpecialCase = true;
             if(match){
-                specialCaseData = tmp.subIngredients;
+                specialCaseData = ingredient.subIngredients;
             }
         }else{
-            return tmp;
+            return ingredient;
         }
     });
 
     console.log("convertToJsonArray = " + JSON.stringify(structured, null, 3));
     return (structured, isSpecialCase, specialCaseData);
 }
-
+// bookmark conversion
 function convertToJsonArray(input) {
     // Remove "Ingredients:" prefix and trailing period
     const cleaned = input.replace(/^Ingredients:\s*/, '').replace(/\.$/, '');
@@ -1835,35 +2160,35 @@ function convertToJsonArray(input) {
     // Convert to unified JSON format
     const structured = finalList.map(item => {
         const match = item.match(/^(.+?)\s*\((.*?)\)$/);
-        let tmp = {
+        let ingredient = {
                 name: "",
                 jain: null,
                 vegetarian: null,
                 vegan: null,
                 subIngredients: null,
             };
-        let isSpecialCase2, specialCaseData2, subIngredients;
+        let isSpecialCase, specialCaseData, subIngredients;
         if (match){
-            tmp.name = match[1].trim().toLowerCase();
-            subIngredients, isSpecialCase2, specialCaseData2 = convertToJsonArraySub(match[2]);
-            tmp.subIngredients = subIngredients;
+            ingredient.name = match[1].trim().toLowerCase();
+            subIngredients, isSpecialCase, specialCaseData = convertToJsonArraySub(match[2]);
+            ingredient.subIngredients = subIngredients;
         }else{
-            tmp.name = item.trim().toLowerCase();
+            ingredient.name = item.trim().toLowerCase();
         }
-        tmp.jain = computeJainSinglIngredient(tmp);
-        tmp.vegetarian = computeVegSinglIngredient(tmp);
-        tmp.vegan = computeVeganSinglIngredient(tmp);
-        if(isSpecialCase2){
+        ingredient.vegan = computeVeganSinglIngredient(ingredient);
+        ingredient.vegetarian = computeVegSinglIngredient(ingredient);
+        ingredient.jain = computeJainSinglIngredient(ingredient);
+        if(isSpecialCase){
             let emulsifier = {
                 name: "emulsifier",
-                jain: tmp.jain,
-                vegetarian: tmp.vegetarian,
-                vegan: tmp.vegan,
-                subIngredients: specialCaseData2
+                jain: ingredient.jain,
+                vegetarian: ingredient.vegetarian,
+                vegan: ingredient.vegan,
+                subIngredients: specialCaseData
             };
-            tmp.subIngredients.append(emulsifier);
+            ingredient.subIngredients.append(emulsifier);
         }
-        return tmp;
+        return ingredient;
     });
 
 
