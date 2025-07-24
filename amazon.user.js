@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         Amazon Ingredients Extractor
 // @namespace    tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  Extract ingredients from Amazon product pages
 // @author       Parshwa Shah
-// @match        www.amazon.com/*
+// @match        https://www.amazon.com/*
 // @grant        none
 // ==/UserScript==
 const strTest = str => /^[\(\)\[\]a-z;&%, 0-9]*$/gi.test(str);
