@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amazon Ingredients Extractor
 // @namespace    tampermonkey.net/
-// @version      1.0.0
+// @version      1.0.0.1
 // @description  Extract ingredients from Amazon product pages
 // @author       Parshwa Shah
 // @match        https://www.amazon.com/*
@@ -152,14 +152,19 @@ console.log("Best Match:", result.match);
 console.log("Confidence:", result.confidence);
 
 */
+function check (name) {return
+                       name === "natural flavor" ||
+                       name === "artificial flavor" ||
+                       name === "natural and artificial flavor" ||
+                       name === "natural color" ||
+                       name === "artificial color" ||
+                       name === "natural and artificial color"}
 
 // bookmark closest pair logic above
 var jainIngredients = [
   "agar",
   "almonds",
   "apples",
-  "artificial color",
-  "artificial flavor",
   "asafoetida",
   "avocado oil",
   "baingan",
@@ -408,6 +413,12 @@ var jainIngredients = [
 ];
 // bookmark jain ingredients end
 var nonJainIngredients = [
+  "natural flavor",
+  "artificial flavor",
+  "natural and artificial flavor",
+  "natural color",
+  "artificial color",
+  "natural and artificial color",
   "apios",
   "arrowroot",
   "beet",
@@ -470,7 +481,6 @@ var nonJainIngredients = [
   "alpha tocopherol acetate",
   "vitamin e",
   "vitamin a palmitate",
-  "natural flavor",
   "vitamin a",
   "vitamin a palmitate",
   "vitamin b12",
@@ -749,6 +759,12 @@ var veganIngredients = [
 //bookmark vegan ingredients end
 
 var nonVeganIngredients = [
+  "natural flavor",
+  "artificial flavor",
+  "natural and artificial flavor",
+  "natural color",
+  "artificial color",
+  "natural and artificial color",
   "adrenaline",
   "afterbirth",
   "alanine",
@@ -769,8 +785,6 @@ var nonVeganIngredients = [
   "animal hair",
   "arachidonic acid",
   "arachidyl proprionate",
-  "artificial color",
-  "artificial flavor",
   "bee pollen",
   "bee products",
   "beeswax",
@@ -907,7 +921,6 @@ var nonVeganIngredients = [
   "myristic acid",
   "myristyls",
   "nachos",
-  "natural flavor",
   "nucleic acids",
   "ocenol",
   "octyl dodecanol",
@@ -1040,8 +1053,6 @@ var vegetarianIngredients = [
   "apios",
   "apples",
   "arrowroot",
-  "artificial color",
-  "artificial flavor",
   "asafoetida",
   "avocado oil",
   "baingan",
@@ -1306,6 +1317,12 @@ var vegetarianIngredients = [
 ];
 //bookmark vegitarian ingredients end
 var notVegetarianIngredients = [
+    "natural flavor",
+    "artificial flavor",
+    "natural and artificial flavor",
+    "natural color",
+    "artificial color",
+    "natural and artificial color",
     "egg",
     "egg whites",
     "eggs",
@@ -1322,7 +1339,6 @@ var notVegetarianIngredients = [
     "chicken",
     "pork",
     "turkey",
-    "natural flavor",
 ];
 //bookmark non vegitarian ingredients end
 
@@ -1339,7 +1355,7 @@ function isNonJain(ingredientName){
 
 function computeJainSinglIngredient (ingredient) {
     if(ingredient && ingredient.name) {
-        if (ingredient.name === "natural flavor"){
+        if (check(ingredient.name)){
             return "MAYBE(DO REASEARCH)";
         }
         if (ingredient.jain !== null){
@@ -1373,7 +1389,7 @@ function computeJainSinglIngredient (ingredient) {
             let nearestMatchIngredient = null;
             nearestMatchIngredient = findNearestIngredientMatchWithConfidence( jainIngredients, ingredient.name );
             if (nearestMatchIngredient.confidence > 0.9){
-                if (nearestMatchIngredient.match === "natural flavor"){
+                if (check(nearestMatchIngredient.match)){
                     return "MAYBE(DO RESEARCH)";
                 }
                 console.log(`${ingredient.name} to ${nearestMatchIngredient.match} with confidence ${nearestMatchIngredient.confidence}`);
@@ -1382,7 +1398,7 @@ function computeJainSinglIngredient (ingredient) {
                 nearestMatchIngredient = findNearestIngredientMatchWithConfidence( nonJainIngredients, ingredient.name );
                 if (nearestMatchIngredient.confidence > 0.9){
                     console.log(`${ingredient.name} to ${nearestMatchIngredient.match} with confidence ${nearestMatchIngredient.confidence}`);
-                    if (nearestMatchIngredient.match === "natural flavor"){
+                    if (check(nearestMatchIngredient.match)){
                         return "MAYBE(DO RESEARCH)";
                     }
                     return "NO";
@@ -1455,7 +1471,7 @@ function isVegetarian(ingredientName){
 }
 
 function computeVegSinglIngredient (ingredient) {
-    if (ingredient.name === "natural flavor"){
+    if (check(ingredient.name)){
         return "MAYBE(DO REASEARCH)";
     }
     if (ingredient.vegetarian){
@@ -1494,7 +1510,7 @@ function computeVegSinglIngredient (ingredient) {
             console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
             console.log(`${ingredient.name} to ${tmp2.match} with confidence ${tmp2.confidence}`);
             console.log(`${ingredient.name} to ${tmp3.match} with confidence ${tmp3.confidence}`);
-            if (tmp.match === "natural flavor"){
+            if (check(tmp.match)){
                 return "MAYBE(DO RESEARCH)";
             }
             return "YES";
@@ -1502,7 +1518,7 @@ function computeVegSinglIngredient (ingredient) {
             tmp = findNearestIngredientMatchWithConfidence( notVegetarianIngredients, ingredient.name );
             if (tmp.confidence > 0.9 || tmp2.confidence > 0.9){
                 console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
-                if (tmp.match === "natural flavor"){
+                if (check(tmp.match)){
                     return "MAYBE(DO RESEARCH)";
                 }
                 return "NO";
@@ -1566,7 +1582,7 @@ function computeVeg (ingredients) {
 
 function computeVeganSinglIngredient(ingredient){
     if (ingredient && ingredient.name){
-        if (ingredient.name === "natural flavor"){
+        if (check(ingredient.name)){
             return "MAYBE(DO REASEARCH)";
         }
         if (ingredient.vegan !== null){
@@ -1604,7 +1620,7 @@ function computeVeganSinglIngredient(ingredient){
             nearestIngredient = findNearestIngredientMatchWithConfidence( veganIngredients, ingredient.name );
             if (nearestIngredient.confidence > 0.9){
                 console.log(`${ingredient.name} to ${nearestIngredient.match} with confidence ${nearestIngredient.confidence}`);
-                if (nearestIngredient.match === "natural flavor"){
+                if (check(nearestIngredient.match)){
                     return "MAYBE(DO RESEARCH)";
                 }
                 return "YES";
@@ -1612,7 +1628,7 @@ function computeVeganSinglIngredient(ingredient){
                 nearestIngredient = findNearestIngredientMatchWithConfidence( nonVeganIngredients, ingredient.name );
                 if (nearestIngredient.confidence > 0.9){
                     console.log(`${ingredient.name} to ${nearestIngredient.match} with confidence ${nearestIngredient.confidence}`);
-                    if (nearestIngredient.match === "natural flavor"){
+                    if (check(nearestIngredient.match)){
                         return "MAYBE(DO RESEARCH)";
                     }
                     return "NO";
@@ -1697,7 +1713,10 @@ function displayIngredients (ingredients, subCount = 0) {
         let jain = ingredients[i].jain;
         let veg = ingredients[i].vegetarian;
         let vegan = ingredients[i].vegan;
-        displayButton &= ! (jain === "MAYBE(DO RESEARCH)") && !(veg === "MAYBE(DO RESEARCH)") && !(vegan === "MAYBE(DO RESEARCH)");
+        if (check(ingredients[i].name)){
+        }else{
+            displayButton &= ! (jain === "MAYBE(DO RESEARCH)") && !(veg === "MAYBE(DO RESEARCH)") && !(vegan === "MAYBE(DO RESEARCH)");
+        }
         displayString += "<tr>";
         displayString += "<td>" + sub + ingredients[i].name + "</td>";
         displayString += "<td>" + jain + "</td>";
@@ -2063,24 +2082,49 @@ function extractIngredients() {
                 `;
         document.body.appendChild(displayBox);
 
+
     }
 }
 
+function splitIngredient(item) {
+    let name = item.trim();
+    let sub = null;
+    let depth = 0;
+    let start = -1;
+
+    for (let i = 0; i < item.length; i++) {
+        if (item[i] === '(') {
+            if (depth === 0) start = i;
+            depth++;
+        } else if (item[i] === ')') {
+            depth--;
+            if (depth === 0) {
+                name = item.slice(0, start).trim();
+                sub = item.slice(start + 1, i).trim();
+                break;
+            }
+        }
+    }
+
+    return [name, sub];
+}
+
 function convertToJsonArraySub(input) {
-    const cleaned = input
-        .replace(/^Ingredients:\s*/i, '')
+    input = input
+        .split(/CONTAINS:/i)[0]
         .replace(/\.$/, '')
         .replace(/\[/g, '(')
-        .replace(/\]/g, ')');
+        .replace(/\]/g, ')')
+        .replace(/\s+/g, ' ')
+        .replace(/AND\/OR/gi, 'AND_OR');
 
     const result = [];
     let current = '';
     let depth = 0;
 
-    for (let char of cleaned) {
+    for (let char of input) {
         if ((char === ',' || char === ';') && depth === 0) {
             if (current.trim()) {
-                current = current.replaceAll("  ", " ");
                 result.push(current.trim());
             }
             current = '';
@@ -2099,19 +2143,23 @@ function convertToJsonArraySub(input) {
     let specialCaseData = undefined;
 
     const structured = finalList.map(item => {
-        const match = item.match(/^(.+?)\s*\((.*?)\)$/);
+        const [name, subString] = splitIngredient(item);
         let ingredient = {
-            name: "",
+            name: name.toLowerCase(),
             jain: null,
             vegetarian: null,
             vegan: null,
             subIngredients: null
         };
 
-        if (match) {
-            ingredient.name = match[1].trim().toLowerCase();
-            const [subIngredients, isSpecialCase2, specialCaseData2] = convertToJsonArraySub(match[2]);
+        if (subString) {
+            const [subIngredients, isSpecialCase2, specialCaseData2] = convertToJsonArraySub(subString);
             ingredient.subIngredients = subIngredients;
+
+            if (ingredient.name === "emulsifier") {
+                isSpecialCase = true;
+                specialCaseData = subIngredients;
+            }
 
             if (isSpecialCase2) {
                 ingredient.subIngredients.push({
@@ -2122,18 +2170,11 @@ function convertToJsonArraySub(input) {
                     subIngredients: specialCaseData2
                 });
             }
-        } else {
-            ingredient.name = item.trim().toLowerCase();
         }
 
         ingredient.vegan = computeVeganSinglIngredient(ingredient);
         ingredient.vegetarian = computeVegSinglIngredient(ingredient);
         ingredient.jain = computeJainSinglIngredient(ingredient);
-
-        if (ingredient.name === "emulsifier") {
-            isSpecialCase = true;
-            specialCaseData = ingredient.subIngredients;
-        }
 
         return ingredient;
     });
@@ -2142,18 +2183,21 @@ function convertToJsonArraySub(input) {
 }
 
 function convertToJsonArray(input) {
-    const cleaned = input
+    input = input
+        .split(/CONTAINS:/i)[0]
         .replace(/^Ingredients:\s*/i, '')
         .replace(/\.$/, '')
         .replace(/\[/g, '(')
-        .replace(/\]/g, ')');
+        .replace(/\]/g, ')')
+        .replace(/\s+/g, ' ')
+        .replace(/AND\/OR/gi, 'AND_OR');
 
     const result = [];
     let current = '';
     let depth = 0;
 
-    for (let i = 0; i < cleaned.length; i++) {
-        const char = cleaned[i];
+    for (let i = 0; i < input.length; i++) {
+        const char = input[i];
 
         if ((char === ',' || char === ';') && depth === 0) {
             if (current.trim()) result.push(current.trim());
@@ -2164,7 +2208,9 @@ function convertToJsonArray(input) {
         if (char === '(') depth++;
         else if (char === ')') depth--;
 
-        current += char;
+        if (strTest(char)) {
+            current += char;
+        }
     }
 
     if (current.trim()) result.push(current.trim());
@@ -2172,21 +2218,20 @@ function convertToJsonArray(input) {
     const finalList = result.map(item => item.replace(/^and\s+/i, '').trim());
 
     const structured = finalList.map(item => {
-        const match = item.match(/^(.+?)\s*\((.*?)\)$/);
+        const [name, subString] = splitIngredient(item);
         let ingredient = {
-            name: "",
+            name: name.toLowerCase(),
             jain: null,
             vegetarian: null,
             vegan: null,
             subIngredients: null
         };
 
-        if (match) {
-            ingredient.name = match[1].trim().toLowerCase();
-            const [subIngredients, isSpecialCase, specialCaseData] = convertToJsonArraySub(match[2]);
+        if (subString) {
+            const [subIngredients, isSpecialCase, specialCaseData] = convertToJsonArraySub(subString);
             ingredient.subIngredients = subIngredients;
 
-            if (isSpecialCase) {
+            if (ingredient.name === "emulsifier") {
                 ingredient.subIngredients.push({
                     name: "emulsifier",
                     jain: ingredient.jain,
@@ -2195,8 +2240,6 @@ function convertToJsonArray(input) {
                     subIngredients: specialCaseData
                 });
             }
-        } else {
-            ingredient.name = item.trim().toLowerCase();
         }
 
         ingredient.vegan = computeVeganSinglIngredient(ingredient);
@@ -2209,7 +2252,6 @@ function convertToJsonArray(input) {
     console.log("convertToJsonArray = " + JSON.stringify(structured, null, 3));
     return structured;
 }
-
 
 (function() {
     'use strict';
