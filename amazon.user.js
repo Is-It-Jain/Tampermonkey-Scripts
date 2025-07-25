@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amazon Ingredients Extractor
 // @namespace    tampermonkey.net/
-// @version      1.0.0.1
+// @version      1.0.0.2
 // @description  Extract ingredients from Amazon product pages
 // @author       Parshwa Shah
 // @match        https://www.amazon.com/*
@@ -159,6 +159,28 @@ function check (name) {return
                        name === "natural color" ||
                        name === "artificial color" ||
                        name === "natural and artificial color"}
+
+function csvToJson(csv) {
+    const lines = csv.trim().split('\n');
+    const headers = lines.shift().split(',');
+    return lines.map(line => {
+        const values = line.split(',');
+        return Object.fromEntries(headers.map((h, i) => [h.trim(), values[i]?.trim()]));
+    });
+}
+
+fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients_list.csv')
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch CSV');
+        return response.text();
+    })
+    .then(csv => {
+        const jsonData = csvToJson(csv);
+        localStorage.set("json", jsonData);
+    })
+    .catch(err => {
+        callback(err, null);
+    });
 
 // bookmark closest pair logic above
 var jainIngredients = [
