@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amazon Ingredients Extractor
 // @namespace    tampermonkey.net/
-// @version      1.0.1.0
+// @version      2.0.0.1
 // @description  Extract ingredients from Amazon product pages
 // @author       Parshwa Shah
 // @match        https://www.amazon.com/*
