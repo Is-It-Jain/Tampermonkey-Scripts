@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amazon Ingredients Extractor
 // @namespace    tampermonkey.net/
-// @version      2.0.0.1
+// @version      2.0.0.0
 // @description  Extract ingredients from Amazon product pages
 // @author       Parshwa Shah
 // @match        https://www.amazon.com/*
@@ -9,6 +9,16 @@
 // ==/UserScript==
 const strTest = str => /^[\(\)\[\]a-z;&%, 0-9]*$/gi.test(str);
 var displayButton = true;
+
+var jainIngredients = [];
+var nonJainIngredients = [];
+var veganIngredients = [];
+var nonVeganIngredients = [];
+var vegetarianIngredients = [];
+var notVegetarianIngredients = [];
+var ingredientsMap = new Map();
+var ingredientsList = [];
+
 function callback(error, responseJson) {
     let loadingElement = document.querySelector("div#loading-box");
 
@@ -136,22 +146,7 @@ function findNearestIngredientMatchWithConfidence(ingredientList, input) {
     confidence: confidence.toFixed(2)
   };
 }
-/*
-const ingredients = [
-  "Milk",
-  "Soy Lecithin",
-  "Palm Oil",
-  "Peanuts",
-  "Calcium Carbonate"
-];
 
-const input = "milk made in a facility that handles soy";
-
-const result = findNearestIngredientMatchWithConfidence(ingredients, input);
-console.log("Best Match:", result.match);
-console.log("Confidence:", result.confidence);
-
-*/
 function check (name) {return
                        name === "natural flavor" ||
                        name === "artificial flavor" ||
@@ -175,53 +170,59 @@ function csvToJson(csv) {
     });
 }
 
-var jainIngredients = [];
-var nonJainIngredients = [];
-var veganIngredients = [];
-var nonVeganIngredients = [];
-var vegetarianIngredients = [];
-var notVegetarianIngredients = [];
 
 
-fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients_list.csv').then(response => {
+
+fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason.csv').then(response => {
     if (!response.ok) throw new Error('Failed to fetch CSV');
     return response.text();
 }).then(csv => {
     const jsonData = csvToJson(csv);
     localStorage.setItem("json", jsonData);
+    console.log("jsonData");
     console.log(jsonData);
     for(let i in jsonData){
-        let data = jsonData[i];
-        let name = data["Ingredient_name"]
-        if (data["jain"].toLowerCase() === "yes"){
+        let ingredient_details = jsonData[i];
+        let name = ingredient_details.name
+        ingredientsList.push(name);
+        ingredientsMap.set(name,ingredient_details);
+
+        //TODO: remove following code
+
+        if (ingredient_details.jain.toLowerCase() === "yes"){
             jainIngredients.push(name);
         }else{
-            nonJainIngredients.push(name);
+            nonJainIngredients.push(name,);
         }
-        if (data["vegan"].toLowerCase() === "yes"){
+        if (ingredient_details.vegan.toLowerCase() === "yes"){
             veganIngredients.push(name);
         }else{
             nonVeganIngredients.push(name);
         }
-        if (data["vegetarian"].toLowerCase() === "yes"){
+        if (ingredient_details.vegetarian.toLowerCase() === "yes"){
             vegetarianIngredients.push(name);
         }else{
             notVegetarianIngredients.push(name);
         }
+        //TODO: remove above code
     }
+
+    localStorage.setItem("ingredients Data", JSON.stringify({
+        "ingredientsList": ingredientsList,
+        "ingredientsMap": ingredientsMap,
+        "jy": jainIngredients,
+        "jn": nonJainIngredients,
+        "vy": veganIngredients,
+        "vn": nonVeganIngredients,
+        "vegy": vegetarianIngredients,
+        "vegn": notVegetarianIngredients,
+        "loaded": 0
+    }));
+
 }).catch(err => {
     callback(err, null);
 });
 
-localStorage.setItem("ingredients Data", JSON.stringify({
-    "jy": jainIngredients,
-    "jn": nonJainIngredients,
-    "vy": veganIngredients,
-    "vn": nonVeganIngredients,
-    "vegy": vegetarianIngredients,
-    "vegn": notVegetarianIngredients,
-    "loaded": 0
-}));
 
 function isJain(ingredientName){
     return jainIngredients.includes(ingredientName.toLowerCase()) && !nonJainIngredients.includes(ingredientName.toLowerCase());
@@ -806,6 +807,8 @@ function extractIngredients() {
                     <h3>Jain : ${jain}</h3>
                     <h3>Vegetarian : ${veg}</h3>
                     <h3>Vegan : ${vegan}</h3>
+                    <h3>URL : ${cleanAmazonUrl(window.location.href)}</h3>
+                    <h3>Dietry : ${JSON.stringify(dietryList)}</h3>
                     <h3>Ingredients:</h3>
                     <p>${displayIngredientsTable(otherIngredientsAsJson)}</p>
                 `;
