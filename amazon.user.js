@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Amazon Ingredients Extractor
 // @namespace    tampermonkey.net/
-// @version      1.0.0.2
+// @version      1.0.1.0
 // @description  Extract ingredients from Amazon product pages
 // @author       Parshwa Shah
 // @match        https://www.amazon.com/*
@@ -158,7 +158,13 @@ function check (name) {return
                        name === "natural and artificial flavor" ||
                        name === "natural color" ||
                        name === "artificial color" ||
-                       name === "natural and artificial color"}
+                       name === "natural and artificial color" ||
+                       name === "natural flavors" ||
+                       name === "artificial flavors" ||
+                       name === "natural and artificial flavors" ||
+                       name === "natural colors" ||
+                       name === "artificial colors" ||
+                       name === "natural and artificial colors"}
 
 function csvToJson(csv) {
     const lines = csv.trim().split('\n');
@@ -214,6 +220,7 @@ localStorage.setItem("ingredients Data", JSON.stringify({
     "vn": nonVeganIngredients,
     "vegy": vegetarianIngredients,
     "vegn": notVegetarianIngredients,
+    "loaded": 0
 }));
 
 function isJain(ingredientName){
@@ -227,7 +234,7 @@ function isNonJain(ingredientName){
 function computeJainSinglIngredient (ingredient) {
     if(ingredient && ingredient.name) {
         if (check(ingredient.name)){
-            return "MAYBE(DO REASEARCH)";
+            return "MAYBE";
         }
         if (ingredient.jain !== null){
             return ingredient.jain;
@@ -244,13 +251,13 @@ function computeJainSinglIngredient (ingredient) {
                 return "NO";
             } else if (subJain === "YES") { // if subIngredient is jain
                 return "YES";
-            } else if (subJain === "MAYBE(DO RESEARCH)") { // if subIngredient is not sure jain
+            } else if (subJain === "MAYBE") { // if subIngredient is not sure jain
                 if (isJainValue && !isNotJainValue) {
                     return "YES";
                 } else if (isNotJainValue || vegSingle === "NO") {
                     return "NO";
                 }
-                return "MAYBE(DO RESEARCH)";
+                return "MAYBE";
             }
         } else if(isJainValue) { // if ingredient is jain
             return "YES";
@@ -261,7 +268,7 @@ function computeJainSinglIngredient (ingredient) {
             nearestMatchIngredient = findNearestIngredientMatchWithConfidence( jainIngredients, ingredient.name );
             if (nearestMatchIngredient.confidence > 0.9){
                 if (check(nearestMatchIngredient.match)){
-                    return "MAYBE(DO RESEARCH)";
+                    return "MAYBE";
                 }
                 console.log(`${ingredient.name} to ${nearestMatchIngredient.match} with confidence ${nearestMatchIngredient.confidence}`);
                 return "YES";
@@ -270,16 +277,16 @@ function computeJainSinglIngredient (ingredient) {
                 if (nearestMatchIngredient.confidence > 0.9){
                     console.log(`${ingredient.name} to ${nearestMatchIngredient.match} with confidence ${nearestMatchIngredient.confidence}`);
                     if (check(nearestMatchIngredient.match)){
-                        return "MAYBE(DO RESEARCH)";
+                        return "MAYBE";
                     }
                     return "NO";
                 } else {
-                    return "MAYBE(DO RESEARCH)";
+                    return "MAYBE";
                 }
             }
         }
     }
-    return "MAYBE(DO RESEARCH)";
+    return "MAYBE";
 }
 
 function computeJain (ingredients) {
@@ -302,7 +309,7 @@ function computeJain (ingredients) {
                 return "NO";
             } else if (subJain === "YES") { // if subIngredient is jain
                 allJain = allJain && true;
-            } else if (subJain === "MAYBE(DO RESEARCH)") { // if subIngredient is not sure jain
+            } else if (subJain === "MAYBE") { // if subIngredient is not sure jain
                 allJain = allJain && false;
             }
         } else {
@@ -315,7 +322,7 @@ function computeJain (ingredients) {
                 return "NO";
             } else if (jainVal === "YES") {
                 allJain = allJain && true;
-            } else if (jainVal === "MAYBE(DO RESEARCH)") {
+            } else if (jainVal === "MAYBE") {
                 allJain = allJain && false;
             }
         }
@@ -326,7 +333,7 @@ function computeJain (ingredients) {
     } else if (anyNonVeg || anyNonJain) {
         jain = "NO"
     } else {
-        jain = "MAYBE(DO RESEARCH)"
+        jain = "MAYBE"
     }
     return jain;
 }
@@ -343,12 +350,12 @@ function isVegetarian(ingredientName){
 
 function computeVegSinglIngredient (ingredient) {
     if (check(ingredient.name)){
-        return "MAYBE(DO REASEARCH)";
+        return "MAYBE";
     }
     if (ingredient.vegetarian){
         return ingredient.vegetarian;
     }
-    let isVeg = "MAYBE(DO RESEARCH)";
+    let isVeg = "MAYBE";
     if (ingredient.subIngredients) {
         let isVeg = computeVeg(ingredient.subIngredients);
 
@@ -356,14 +363,14 @@ function computeVegSinglIngredient (ingredient) {
             return "NO";
         } else if (isVeg === "YES") { // if subIngredient is jain
             return "YES";
-        } else if (isVeg === "MAYBE(DO RESEARCH)") { // if subIngredient is not sure jain
+        } else if (isVeg === "MAYBE") { // if subIngredient is not sure jain
 
             if ( (isVegetarian(ingredient.name) || isVegan(ingredient.name)) && !isNotVegetarian(ingredient.name)) {
                 return "YES";
             } else if (isNotVegetarian(ingredient.name)) {
                 return "NO";
             }
-            return "MAYBE(DO RESEARCH)";
+            return "MAYBE";
         }
     }
     if( (isVegetarian(ingredient.name) || isVegan(ingredient.name)) && !isNotVegetarian(ingredient.name)){
@@ -382,7 +389,7 @@ function computeVegSinglIngredient (ingredient) {
             console.log(`${ingredient.name} to ${tmp2.match} with confidence ${tmp2.confidence}`);
             console.log(`${ingredient.name} to ${tmp3.match} with confidence ${tmp3.confidence}`);
             if (check(tmp.match)){
-                return "MAYBE(DO RESEARCH)";
+                return "MAYBE";
             }
             return "YES";
         } else {
@@ -390,14 +397,14 @@ function computeVegSinglIngredient (ingredient) {
             if (tmp.confidence > 0.9 || tmp2.confidence > 0.9){
                 console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
                 if (check(tmp.match)){
-                    return "MAYBE(DO RESEARCH)";
+                    return "MAYBE";
                 }
                 return "NO";
             }
-            return "MAYBE(DO RESEARCH)";
+            return "MAYBE";
         }
     }
-    return "MAYBE(DO RESEARCH)";
+    return "MAYBE";
 }
 
 function computeVeg (ingredients) {
@@ -445,7 +452,7 @@ function computeVeg (ingredients) {
         }
     }
     if (maybe) {
-        return "MAYBE(DO RESEARCH)";
+        return "MAYBE";
     } else {
         return "YES";
     }
@@ -454,7 +461,7 @@ function computeVeg (ingredients) {
 function computeVeganSinglIngredient(ingredient){
     if (ingredient && ingredient.name){
         if (check(ingredient.name)){
-            return "MAYBE(DO REASEARCH)";
+            return "MAYBE";
         }
         if (ingredient.vegan !== null){
             return ingredient.vegan;
@@ -472,14 +479,14 @@ function computeVeganSinglIngredient(ingredient){
                 return "NO";
             } else if (subVegan === "YES") { // if subIngredient is jain
                 return "YES";
-            } else if (subVegan === "MAYBE(DO RESEARCH)") { // if subIngredient is not sure jain
+            } else if (subVegan === "MAYBE") { // if subIngredient is not sure jain
 
                 if (isVeganVal && !isNonVeganVal) {
                     return "YES";
                 } else if (isNonVeganVal || vegSingle === "NO") {
                     return "NO";
                 }
-                return "MAYBE(DO RESEARCH)";
+                return "MAYBE";
             }
         }
         if(isVeganVal && !isNonVeganVal){
@@ -492,7 +499,7 @@ function computeVeganSinglIngredient(ingredient){
             if (nearestIngredient.confidence > 0.9){
                 console.log(`${ingredient.name} to ${nearestIngredient.match} with confidence ${nearestIngredient.confidence}`);
                 if (check(nearestIngredient.match)){
-                    return "MAYBE(DO RESEARCH)";
+                    return "MAYBE";
                 }
                 return "YES";
             } else {
@@ -500,15 +507,15 @@ function computeVeganSinglIngredient(ingredient){
                 if (nearestIngredient.confidence > 0.9){
                     console.log(`${ingredient.name} to ${nearestIngredient.match} with confidence ${nearestIngredient.confidence}`);
                     if (check(nearestIngredient.match)){
-                        return "MAYBE(DO RESEARCH)";
+                        return "MAYBE";
                     }
                     return "NO";
                 }
-                return "MAYBE(DO RESEARCH)";
+                return "MAYBE";
             }
         }
     }
-    return "MAYBE(DO RESEARCH)";
+    return "MAYBE";
 }
 
 function computeVegan(ingredients){
@@ -556,7 +563,7 @@ function computeVegan(ingredients){
         }
     }
     if (maybe) {
-        return "MAYBE(DO RESEARCH)";
+        return "MAYBE";
     }else {
         return "YES";
     }
@@ -586,7 +593,7 @@ function displayIngredients (ingredients, subCount = 0) {
         let vegan = ingredients[i].vegan;
         if (check(ingredients[i].name)){
         }else{
-            displayButton &= ! (jain === "MAYBE(DO RESEARCH)") && !(veg === "MAYBE(DO RESEARCH)") && !(vegan === "MAYBE(DO RESEARCH)");
+            displayButton &= ! (jain === "MAYBE") && !(veg === "MAYBE") && !(vegan === "MAYBE()");
         }
         displayString += "<tr>";
         displayString += "<td>" + sub + ingredients[i].name + "</td>";
@@ -746,7 +753,7 @@ function extractIngredients() {
                         "vegan":vegan
                     },
                     {
-                        "tithi":"MAYBE(DO RESEARCH)"
+                        "tithi":"MAYBE"
                     }
                 ],
                 "dietary":dietryList,
@@ -957,37 +964,51 @@ function extractIngredients() {
     }
 }
 
-function splitIngredient(item) {
-    let name = item.trim();
+function splitIngredient(item2) {
+    let item = "";
+    let name = item2.trim();
     let sub = null;
     let depth = 0;
     let start = -1;
 
-    for (let i = 0; i < item.length; i++) {
-        if (item[i] === '(') {
+    for (let i = 0; i < item2.length; i++) {
+        item += item2[i];
+        if (item2[i] === '(') {
             if (depth === 0) start = i;
             depth++;
-        } else if (item[i] === ')') {
+        } else if (item2[i] === ')') {
             depth--;
-            if (depth === 0) {
-                name = item.slice(0, start).trim();
-                sub = item.slice(start + 1, i).trim();
-                break;
-            }
+            if (depth === 0) break;
         }
     }
+
+    // If there's still an unmatched `(`, auto-close it
+    while (depth > 0) {
+        item += ')';
+        depth--;
+    }
+
+    if (start === -1) {
+        // No parentheses found
+        return [item2.trim(), null];
+    }
+
+    name = item.slice(0, start).trim();
+    sub = item.slice(start + 1, item.length - 1).trim();
 
     return [name, sub];
 }
 
 function convertToJsonArraySub(input) {
     input = input
-        .split(/CONTAINS:/i)[0]
-        .replace(/\.$/, '')
+        .split(/CONTAINS:/gi)[0]
+        .replace(/\.$/g, '')
         .replace(/\[/g, '(')
         .replace(/\]/g, ')')
         .replace(/\s+/g, ' ')
-        .replace(/AND\/OR/gi, 'AND_OR');
+        .replace(/ AND /gi, ', ')
+        .replace(/ OR /gi, ', ')
+        .replace(/ ,/gi, ',');
 
     const result = [];
     let current = '';
@@ -1055,13 +1076,14 @@ function convertToJsonArraySub(input) {
 
 function convertToJsonArray(input) {
     input = input
-        .split(/CONTAINS:/i)[0]
-        .replace(/^Ingredients:\s*/i, '')
-        .replace(/\.$/, '')
+        .split(/CONTAINS:/gi)[0]
+        .replace(/\.$/g, '')
         .replace(/\[/g, '(')
         .replace(/\]/g, ')')
         .replace(/\s+/g, ' ')
-        .replace(/AND\/OR/gi, 'AND_OR');
+        .replace(/ AND /gi, ', ')
+        .replace(/ OR /gi, ', ')
+        .replace(/ ,/gi, ',');
 
     const result = [];
     let current = '';
