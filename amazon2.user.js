@@ -10,14 +10,20 @@
 const strTest = str => /^[\(\)\[\]a-z;&%, 0-9]*$/gi.test(str);
 var displayButton = true;
 
-var jainIngredients = [];
-var nonJainIngredients = [];
-var veganIngredients = [];
-var nonVeganIngredients = [];
-var vegetarianIngredients = [];
-var notVegetarianIngredients = [];
 var ingredientsMap = new Map();
 var ingredientsList = [];
+
+function normalizeName(name) {
+    return name
+        .replace(/\[.*?\]/g, '')
+        .replace(/contains less than.*?% of/gi, '')
+        .replace(/as a preservative/gi, '')
+        .replace(/\(.*?\)/g, '')
+        .replace(/[^a-z0-9\s]/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+}
 
 function callback(error, responseJson) {
     let loadingElement = document.querySelector("div#loading-box");
@@ -173,119 +179,32 @@ function csvToJson(csv) {
 
 
 
-fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason.csv').then(response => {
+fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason.csv')
+.then(response => {
     if (!response.ok) throw new Error('Failed to fetch CSV');
     return response.text();
-}).then(csv => {
+})
+.then(csv => {
     const jsonData = csvToJson(csv);
-    localStorage.setItem("json", jsonData);
-    console.log("jsonData");
-    console.log(jsonData);
-    for(let i in jsonData){
-        let ingredient_details = jsonData[i];
-        let name = ingredient_details.name
-        ingredientsList.push(name);
-        ingredientsMap.set(name,ingredient_details);
-
-        //TODO: remove following code
-
-        if (ingredient_details.jain.toLowerCase() === "yes"){
-            jainIngredients.push(name);
-        }else{
-            nonJainIngredients.push(name,);
-        }
-        if (ingredient_details.vegan.toLowerCase() === "yes"){
-            veganIngredients.push(name);
-        }else{
-            nonVeganIngredients.push(name);
-        }
-        if (ingredient_details.vegetarian.toLowerCase() === "yes"){
-            vegetarianIngredients.push(name);
-        }else{
-            notVegetarianIngredients.push(name);
-        }
-        //TODO: remove above code
+    console.log("CSV loaded", jsonData.length);
+    for (const row of jsonData) {
+        const key = normalizeName(row.name);
+        ingredientsList.push(key);
+        ingredientsMap.set(key, row);
     }
-
-    localStorage.setItem("ingredients Data", JSON.stringify({
-        "ingredientsList": ingredientsList,
-        "ingredientsMap": ingredientsMap,
-        "jy": jainIngredients,
-        "jn": nonJainIngredients,
-        "vy": veganIngredients,
-        "vn": nonVeganIngredients,
-        "vegy": vegetarianIngredients,
-        "vegn": notVegetarianIngredients,
-        "loaded": 0
-    }));
-
-}).catch(err => {
-    callback(err, null);
+})
+.catch(err => {
+    console.error("Failed to fetch CSV:", err);
 });
 
+function computeJainSinglIngredient(ingredient) {
+    const name = normalizeName(ingredient.name);
+    if (ingredientsMap.get(name)) return ingredientsMap.get(name).jain;
+    if (ingredient.jain !== null) return ingredient.jain;
 
-function isJain(ingredientName){
-    return jainIngredients.includes(ingredientName.toLowerCase()) && !nonJainIngredients.includes(ingredientName.toLowerCase());
-}
-
-function isNonJain(ingredientName){
-    return nonJainIngredients.includes(ingredientName.toLowerCase()) || notVegetarianIngredients.includes(ingredientName.toLowerCase());
-}
-
-function computeJainSinglIngredient (ingredient) {
-    if(ingredient && ingredient.name) {
-        if (check(ingredient.name)){
-            return "MAYBE";
-        }
-        if (ingredient.jain !== null){
-            return ingredient.jain;
-        }
-        var vegSingle = ingredient.vegetarian;
-        if (vegSingle == null){
-            vegSingle = computeVegSinglIngredient(ingredient);
-        }
-        var isJainValue = isJain(ingredient.name);
-        var isNotJainValue = isNonJain(ingredient.name);
-        if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
-            var subJain = computeJain(ingredient.subIngredients);
-            if (subJain === "NO") { // if subIngredient is not jain
-                return "NO";
-            } else if (subJain === "YES") { // if subIngredient is jain
-                return "YES";
-            } else if (subJain === "MAYBE") { // if subIngredient is not sure jain
-                if (isJainValue && !isNotJainValue) {
-                    return "YES";
-                } else if (isNotJainValue || vegSingle === "NO") {
-                    return "NO";
-                }
-                return "MAYBE";
-            }
-        } else if(isJainValue) { // if ingredient is jain
-            return "YES";
-        } else if (isNotJainValue || vegSingle === "NO") {// if ingredient is non vegetarian or non jain
-            return "NO";
-        } else { // not sure it is jain or not.
-            let nearestMatchIngredient = null;
-            nearestMatchIngredient = findNearestIngredientMatchWithConfidence( jainIngredients, ingredient.name );
-            if (nearestMatchIngredient.confidence > 0.9){
-                if (check(nearestMatchIngredient.match)){
-                    return "MAYBE";
-                }
-                console.log(`${ingredient.name} to ${nearestMatchIngredient.match} with confidence ${nearestMatchIngredient.confidence}`);
-                return "YES";
-            } else {
-                nearestMatchIngredient = findNearestIngredientMatchWithConfidence( nonJainIngredients, ingredient.name );
-                if (nearestMatchIngredient.confidence > 0.9){
-                    console.log(`${ingredient.name} to ${nearestMatchIngredient.match} with confidence ${nearestMatchIngredient.confidence}`);
-                    if (check(nearestMatchIngredient.match)){
-                        return "MAYBE";
-                    }
-                    return "NO";
-                } else {
-                    return "MAYBE";
-                }
-            }
-        }
+    const nearestMatch = findNearestIngredientMatchWithConfidence(ingredientsList, name);
+    if (nearestMatch.confidence > 0.9 && ingredientsMap.get(nearestMatch.match)) {
+        return ingredientsMap.get(nearestMatch.match).jain;
     }
     return "MAYBE";
 }
@@ -339,71 +258,14 @@ function computeJain (ingredients) {
     return jain;
 }
 
-function isNotVegetarian(ingredientName){
-    return notVegetarianIngredients.includes(ingredientName.toLowerCase());
-}
+function computeVegSinglIngredient(ingredient) {
+    const name = normalizeName(ingredient.name);
+    if (ingredientsMap.get(name)) return ingredientsMap.get(name).vegetarian;
+    if (ingredient.vegetarian !== null) return ingredient.vegetarian;
 
-function isVegetarian(ingredientName){
-    return jainIngredients.includes(ingredientName.toLowerCase()) ||
-       vegetarianIngredients.includes(ingredientName.toLowerCase()) ||
-       veganIngredients.includes(ingredientName.toLowerCase());
-}
-
-function computeVegSinglIngredient (ingredient) {
-    if (check(ingredient.name)){
-        return "MAYBE";
-    }
-    if (ingredient.vegetarian){
-        return ingredient.vegetarian;
-    }
-    let isVeg = "MAYBE";
-    if (ingredient.subIngredients) {
-        let isVeg = computeVeg(ingredient.subIngredients);
-
-        if (isVeg === "NO") { // if subIngredient is not jain
-            return "NO";
-        } else if (isVeg === "YES") { // if subIngredient is jain
-            return "YES";
-        } else if (isVeg === "MAYBE") { // if subIngredient is not sure jain
-
-            if ( (isVegetarian(ingredient.name) || isVegan(ingredient.name)) && !isNotVegetarian(ingredient.name)) {
-                return "YES";
-            } else if (isNotVegetarian(ingredient.name)) {
-                return "NO";
-            }
-            return "MAYBE";
-        }
-    }
-    if( (isVegetarian(ingredient.name) || isVegan(ingredient.name)) && !isNotVegetarian(ingredient.name)){
-        return "YES";
-    } else if (isNotVegetarian(ingredient.name)){
-        return "NO";
-    } else {
-        let tmp = null;
-        let tmp2 = null;
-        let tmp3 = null;
-        tmp = findNearestIngredientMatchWithConfidence( vegetarianIngredients, ingredient.name );
-        tmp2 = findNearestIngredientMatchWithConfidence( jainIngredients, ingredient.name );
-        tmp3 = findNearestIngredientMatchWithConfidence( veganIngredients, ingredient.name );
-        if (tmp.confidence > 0.9 || tmp2.confidence > 0.9 || tmp3.confidence > 0.9){
-            console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
-            console.log(`${ingredient.name} to ${tmp2.match} with confidence ${tmp2.confidence}`);
-            console.log(`${ingredient.name} to ${tmp3.match} with confidence ${tmp3.confidence}`);
-            if (check(tmp.match)){
-                return "MAYBE";
-            }
-            return "YES";
-        } else {
-            tmp = findNearestIngredientMatchWithConfidence( notVegetarianIngredients, ingredient.name );
-            if (tmp.confidence > 0.9 || tmp2.confidence > 0.9){
-                console.log(`${ingredient.name} to ${tmp.match} with confidence ${tmp.confidence}`);
-                if (check(tmp.match)){
-                    return "MAYBE";
-                }
-                return "NO";
-            }
-            return "MAYBE";
-        }
+    const nearestMatch = findNearestIngredientMatchWithConfidence(ingredientsList, name);
+    if (nearestMatch.confidence > 0.9 && ingredientsMap.get(nearestMatch.match)) {
+        return ingredientsMap.get(nearestMatch.match).vegetarian;
     }
     return "MAYBE";
 }
@@ -459,62 +321,14 @@ function computeVeg (ingredients) {
     }
 }
 
-function computeVeganSinglIngredient(ingredient){
-    if (ingredient && ingredient.name){
-        if (check(ingredient.name)){
-            return "MAYBE";
-        }
-        if (ingredient.vegan !== null){
-            return ingredient.vegan;
-        }
-        var vegSingle = ingredient.vegetarian;
-        if (vegSingle == null){
-            vegSingle = computeVegSinglIngredient(ingredient);
-        }
-        var isVeganVal = isVegan(ingredient.name);
-        var isNonVeganVal = isNonVegan(ingredient.name);
+function computeVeganSinglIngredient(ingredient) {
+    const name = normalizeName(ingredient.name);
+    if (ingredientsMap.get(name)) return ingredientsMap.get(name).vegan;
+    if (ingredient.vegan !== null) return ingredient.vegan;
 
-        if (ingredient.subIngredients) {
-            var subVegan = computeVegan(ingredient.subIngredients)
-            if (subVegan === "NO") { // if subIngredient is not jain
-                return "NO";
-            } else if (subVegan === "YES") { // if subIngredient is jain
-                return "YES";
-            } else if (subVegan === "MAYBE") { // if subIngredient is not sure jain
-
-                if (isVeganVal && !isNonVeganVal) {
-                    return "YES";
-                } else if (isNonVeganVal || vegSingle === "NO") {
-                    return "NO";
-                }
-                return "MAYBE";
-            }
-        }
-        if(isVeganVal && !isNonVeganVal){
-            return "YES";
-        } else if (isNonVeganVal || vegSingle === "NO"){
-            return "NO";
-        } else {
-            let nearestIngredient = null;
-            nearestIngredient = findNearestIngredientMatchWithConfidence( veganIngredients, ingredient.name );
-            if (nearestIngredient.confidence > 0.9){
-                console.log(`${ingredient.name} to ${nearestIngredient.match} with confidence ${nearestIngredient.confidence}`);
-                if (check(nearestIngredient.match)){
-                    return "MAYBE";
-                }
-                return "YES";
-            } else {
-                nearestIngredient = findNearestIngredientMatchWithConfidence( nonVeganIngredients, ingredient.name );
-                if (nearestIngredient.confidence > 0.9){
-                    console.log(`${ingredient.name} to ${nearestIngredient.match} with confidence ${nearestIngredient.confidence}`);
-                    if (check(nearestIngredient.match)){
-                        return "MAYBE";
-                    }
-                    return "NO";
-                }
-                return "MAYBE";
-            }
-        }
+    const nearestMatch = findNearestIngredientMatchWithConfidence(ingredientsList, name);
+    if (nearestMatch.confidence > 0.9 && ingredientsMap.get(nearestMatch.match)) {
+        return ingredientsMap.get(nearestMatch.match).vegan;
     }
     return "MAYBE";
 }
@@ -568,14 +382,6 @@ function computeVegan(ingredients){
     }else {
         return "YES";
     }
-}
-
-function isVegan(ingredientName){
-    return veganIngredients.includes(ingredientName.toLowerCase());
-}
-
-function isNonVegan(ingredientName){
-    return nonVeganIngredients.includes(ingredientName.toLowerCase());
 }
 
 function isJainTithi(ingredientName){
@@ -1005,6 +811,7 @@ function splitIngredient(item2) {
 function convertToJsonArraySub(input) {
     input = input
         .split(/CONTAINS:/gi)[0]
+        .replace(/contains less than.*?% of/gi, "")
         .replace(/\.$/g, '')
         .replace(/\[/g, '(')
         .replace(/\]/g, ')')
@@ -1040,7 +847,14 @@ function convertToJsonArraySub(input) {
     const structured = finalList.map(item => {
         const [name, subString] = splitIngredient(item);
         let ingredient = {
-            name: name.toLowerCase(),
+            name: name.replace(/\[.*?\]/g, '')
+            .replace(/contains less than.*?% of/gi, '')
+            .replace(/as a preservative/gi, '')
+            .replace(/\(.*?\)/g, '')
+            .replace(/[^a-z0-9\s]/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase(),
             jain: null,
             vegetarian: null,
             vegan: null,
@@ -1080,6 +894,7 @@ function convertToJsonArraySub(input) {
 function convertToJsonArray(input) {
     input = input
         .split(/CONTAINS:/gi)[0]
+        .replace(/contains less than.*?% of/gi, "")
         .replace(/\.$/g, '')
         .replace(/\[/g, '(')
         .replace(/\]/g, ')')
@@ -1116,7 +931,14 @@ function convertToJsonArray(input) {
     const structured = finalList.map(item => {
         const [name, subString] = splitIngredient(item);
         let ingredient = {
-            name: name.toLowerCase(),
+            name: name.replace(/\[.*?\]/g, '')
+            .replace(/contains less than.*?% of/gi, '')
+            .replace(/as a preservative/gi, '')
+            .replace(/\(.*?\)/g, '')
+            .replace(/[^a-z0-9\s]/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase(),
             jain: null,
             vegetarian: null,
             vegan: null,
