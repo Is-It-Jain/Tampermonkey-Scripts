@@ -221,11 +221,11 @@ groundnut oil,yes,yes,yes,Plant-based oil extracted from peanuts,Plant-based oil
 guanine,maybe,maybe,no,Can be synthetic or derived from fish scales - source verification needed,Can be synthetic or derived from fish scales - source verification needed,Often derived from fish scales or other animal sources
 guava,yes,yes,yes,Fresh tropical fruit - plant-based and naturally occurring,Fresh tropical fruit - plant-based and naturally occurring,Fresh tropical fruit - plant-based and naturally occurring
 gum acacia,yes,yes,yes,Plant-based gum from Acacia tree sap,Plant-based gum from Acacia tree sap,Plant-based gum from Acacia tree sap
-hazelnuts,yes,maybe,yes,Tree nut - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Tree nut - plant-based and naturally occurring
+hazelnuts,yes,yes,yes,Tree nut - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Tree nut - plant-based and naturally occurring
 hide glue,maybe,maybe,no,Animal-derived adhesive from animal hides,Animal-derived adhesive from animal hides,Made from animal collagen and hides
 hing,yes,yes,yes,Plant-based spice (asafoetida) from Ferula plants,Plant-based spice (asafoetida) from Ferula plants,Plant-based spice (asafoetida) from Ferula plants
 honey,maybe,maybe,no,Animal product but considered acceptable in some Jain practices,Animal product but vegetarian-acceptable in many traditions,Animal-derived product from bee secretions
-honey glazed pecans,yes,maybe,yes,Nuts are plant-based (honey classification as above),Nuts are plant-based but honey is animal-derived,Nuts are plant-based and glaze can be plant-based alternative
+honey glazed pecans,yes,yes,yes,Nuts are plant-based (honey classification as above),Nuts are plant-based but honey is animal-derived,Nuts are plant-based and glaze can be plant-based alternative
 honeycomb,maybe,maybe,no,Direct bee product - animal-derived structure,Direct bee product - animal-derived structure,Direct animal product from bee colonies
 horsehair,maybe,maybe,no,Animal-derived material from horse manes/tails,Animal-derived material from horse manes/tails,Direct animal-derived material
 horseradish,no,yes,yes,Root vegetable that grows underground - not suitable for Jain diet,Plant-based root vegetable,Plant-based root vegetable
@@ -237,7 +237,7 @@ hydrolyzed animal protein,maybe,maybe,no,Explicitly animal-derived protein,Expli
 imidazolidinyl urea,maybe,maybe,no,Synthetic preservative that may use animal-derived components,Synthetic preservative that may use animal-derived components,Manufacturing process may involve animal-derived materials
 includes blue 1 lake,maybe,yes,no,Synthetic color that may be tested on animals,Synthetic color - not directly animal-derived,May involve animal testing or animal-derived processing aids
 insulin,maybe,maybe,no,Can be synthetic or derived from animal pancreas,Can be synthetic or derived from animal pancreas,Often derived from animal sources or tested on animals
-inulin,yes,maybe,yes,Plant-based fiber extracted from chicory root or other plants,May be processed with non-vegetarian processing aids,Plant-based fiber extracted from chicory root or other plants
+inulin,yes,yes,yes,Plant-based fiber extracted from chicory root or other plants,May be processed with non-vegetarian processing aids,Plant-based fiber extracted from chicory root or other plants
 invert sugar,yes,yes,yes,Plant-based sugar processed from sucrose,Plant-based sugar processed from sucrose,Plant-based sugar processed from sucrose
 iron,yes,yes,yes,Mineral supplement - naturally occurring element,Mineral supplement - naturally occurring element,Mineral supplement - naturally occurring element
 isinglass,maybe,maybe,no,Fish-derived gelatin used as clarifying agent,Fish-derived gelatin used as clarifying agent,Derived from fish bladders
@@ -264,14 +264,14 @@ lanolin alcohol,maybe,maybe,no,Derived from lanolin (sheep wool wax),Derived fro
 lanosterols,maybe,maybe,no,Steroid derived from lanolin or animal sources,Steroid derived from lanolin or animal sources,Often derived from animal sources
 lard,maybe,maybe,no,Pig fat - explicitly animal-derived,Pig fat - explicitly animal-derived,Pig fat - explicitly animal-derived
 lauki,yes,yes,yes,Bottle gourd - above-ground plant-based vegetable,Bottle gourd - above-ground plant-based vegetable,Bottle gourd - above-ground plant-based vegetable
-lavender,yes,maybe,yes,Plant-based herb and essential oil,May be processed with non-vegetarian processing aids,Plant-based herb and essential oil
+lavender,yes,yes,yes,Plant-based herb and essential oil,May be processed with non-vegetarian processing aids,Plant-based herb and essential oil
 leather,maybe,maybe,no,Animal hide processed into material,Animal hide processed into material,Made from animal hides
 leavening,yes,yes,yes,Plant-based or synthetic rising agents,Plant-based or synthetic rising agents,Plant-based or synthetic rising agents
 lecithin,yes,yes,no,Can be plant-based (soy) or synthetic,Can be plant-based (soy) or synthetic,Often contains egg-derived components
 leek,no,yes,yes,Root vegetable that grows underground - not suitable for Jain diet,Plant-based vegetable from onion family,Plant-based vegetable from onion family
 lemon,yes,yes,yes,Citrus fruit - plant-based and naturally occurring,Citrus fruit - plant-based and naturally occurring,Citrus fruit - plant-based and naturally occurring
 lemon juice,yes,yes,yes,Extracted from citrus fruit - plant-based,Extracted from citrus fruit - plant-based,Extracted from citrus fruit - plant-based
-lemongrass,yes,maybe,yes,Plant-based herb and flavoring,May be processed with non-vegetarian processing aids,Plant-based herb and flavoring
+lemongrass,yes,yes,yes,Plant-based herb and flavoring,May be processed with non-vegetarian processing aids,Plant-based herb and flavoring
 less than 2% - dextrose,yes,yes,yes,Plant-based sugar derived from corn or other plants,Plant-based sugar derived from corn or other plants,Plant-based sugar derived from corn or other plants
 less than 2% - lactose,yes,yes,no,Milk sugar - dairy-derived but vegetarian-acceptable,Milk sugar - dairy-derived but vegetarian-acceptable,Derived from animal milk
 linoleic acid,maybe,maybe,no,Essential fatty acid that can be plant or animal-derived,Essential fatty acid that can be plant or animal-derived,Often contains animal-derived components
@@ -281,7 +281,7 @@ lipoids,maybe,maybe,no,Fat-like substances that can be plant or animal-derived,F
 liquid smoke,yes,yes,yes,Plant-based flavoring from controlled wood burning,Plant-based flavoring from controlled wood burning,Plant-based flavoring from controlled wood burning
 lobia,yes,yes,yes,Black-eyed peas - plant-based legume,Black-eyed peas - plant-based legume,Black-eyed peas - plant-based legume
 lotus root,no,yes,yes,Root that grows underwater/underground - not suitable for Jain diet,Plant-based root vegetable,Plant-based root vegetable
-macadamia,yes,maybe,yes,Tree nut - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Tree nut - plant-based and naturally occurring
+macadamia,yes,yes,yes,Tree nut - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Tree nut - plant-based and naturally occurring
 malanga,no,yes,yes,Root vegetable that grows underground - not suitable for Jain diet,Plant-based root vegetable,Plant-based root vegetable
 maltodextrin,yes,yes,yes,Plant-based carbohydrate derived from corn/wheat/rice,Plant-based carbohydrate derived from corn/wheat/rice,Plant-based carbohydrate derived from corn/wheat/rice
 mangoes,yes,yes,yes,Tropical fruit - plant-based and naturally occurring,Tropical fruit - plant-based and naturally occurring,Tropical fruit - plant-based and naturally occurring
@@ -350,12 +350,12 @@ partially hydrogenated soybean oil,yes,yes,yes,Plant-based oil that has been che
 peanut butter,yes,yes,yes,Plant-based spread made from peanuts,Plant-based spread made from peanuts,Plant-based spread made from peanuts
 peanuts,yes,yes,yes,Plant-based legume - naturally occurring,Plant-based legume - naturally occurring,Plant-based legume - naturally occurring
 pearl essence,maybe,maybe,no,Can be synthetic or derived from fish scales,Can be synthetic or derived from fish scales,Often derived from fish scales
-pecan,yes,maybe,yes,Tree nut - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Tree nut - plant-based and naturally occurring
-peppermint,yes,maybe,yes,Plant-based herb - naturally occurring,May be processed with non-vegetarian processing aids,Plant-based herb - naturally occurring
+pecan,yes,yes,yes,Tree nut - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Tree nut - plant-based and naturally occurring
+peppermint,yes,yes,yes,Plant-based herb - naturally occurring,May be processed with non-vegetarian processing aids,Plant-based herb - naturally occurring
 pepsin,maybe,maybe,no,Enzyme derived from animal stomach lining,Enzyme derived from animal stomach lining,Derived from animal stomach lining
 pgpr,yes,yes,no,Polyglycerol polyricinoleate - can be plant-based,Polyglycerol polyricinoleate - can be plant-based,May contain animal-derived glycerol
 pig,no,no,no,Animal meat - explicitly non-vegetarian,Animal meat - explicitly non-vegetarian,Animal meat - explicitly non-vegetarian
-pine nuts,yes,maybe,yes,Tree seed - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Tree seed - plant-based and naturally occurring
+pine nuts,yes,yes,yes,Tree seed - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Tree seed - plant-based and naturally occurring
 pistachios,yes,yes,yes,Tree nut - plant-based and naturally occurring,Tree nut - plant-based and naturally occurring,Tree nut - plant-based and naturally occurring
 placenta,maybe,maybe,no,Animal organ - explicitly animal-derived,Animal organ - explicitly animal-derived,Animal organ - explicitly animal-derived
 placenta polypeptides protein,maybe,maybe,no,Protein derived from animal placenta,Protein derived from animal placenta,Derived from animal placenta
@@ -371,7 +371,7 @@ potato,no,yes,yes,Root tuber that grows underground - not suitable for Jain diet
 potatoes,no,yes,yes,Root tubers that grow underground - not suitable for Jain diet,Plant-based root vegetables,Plant-based root vegetables
 pretzel declaration for wheels,yes,yes,yes,Plant-based baked good made from flour and salt,Plant-based baked good made from flour and salt,Plant-based baked good made from flour and salt
 pristane,maybe,maybe,no,Hydrocarbon that can be synthetic or animal-derived,Hydrocarbon that can be synthetic or animal-derived,Often derived from shark liver oil
-processed with alkali,yes,maybe,yes,Chemical processing method using plant-derived alkali,May use processing aids of unknown origin,Chemical processing method using alkali
+processed with alkali,yes,yes,yes,Chemical processing method using plant-derived alkali,May use processing aids of unknown origin,Chemical processing method using alkali
 progesterone,maybe,maybe,no,Hormone that can be synthetic or animal-derived,Hormone that can be synthetic or animal-derived,Often derived from animal sources
 propolis,maybe,maybe,no,Bee product - resin collected by bees,Bee product - resin collected by bees,Animal-derived bee product
 provitamin a,maybe,maybe,no,Vitamin precursor that can be synthetic or animal-derived,Vitamin precursor that can be synthetic or animal-derived,Often derived from animal sources
@@ -385,8 +385,8 @@ quinoa,yes,yes,yes,Plant-based pseudocereal grain,Plant-based pseudocereal grain
 radish,no,yes,yes,Root vegetable that grows underground - not suitable for Jain diet,Plant-based root vegetable,Plant-based root vegetable
 radishes,no,yes,yes,Root vegetables that grow underground - not suitable for Jain diet,Plant-based root vegetables,Plant-based root vegetables
 rajma,yes,yes,yes,Kidney beans - plant-based legume,Kidney beans - plant-based legume,Kidney beans - plant-based legume
-rapeseed,yes,maybe,yes,Plant-based oil seed,May be processed with non-vegetarian processing aids,Plant-based oil seed
-raspberries,yes,maybe,yes,Berry fruit - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Berry fruit - plant-based and naturally occurring
+rapeseed,yes,yes,yes,Plant-based oil seed,May be processed with non-vegetarian processing aids,Plant-based oil seed
+raspberries,yes,yes,yes,Berry fruit - plant-based and naturally occurring,May be processed in facilities with non-vegetarian items,Berry fruit - plant-based and naturally occurring
 raspberry powder,yes,yes,yes,Dried berry powder - plant-based,Dried berry powder - plant-based,Dried berry powder - plant-based
 red 40,yes,yes,yes,Synthetic food coloring - not animal-derived,Synthetic food coloring - not animal-derived,Synthetic food coloring - not animal-derived
 red 40 lake,yes,yes,yes,Synthetic food coloring - not animal-derived,Synthetic food coloring - not animal-derived,Synthetic food coloring - not animal-derived
@@ -398,7 +398,7 @@ riboflavin,yes,yes,yes,Vitamin B2 - can be synthetic or plant-derived,Vitamin B2
 ribonucleic acid,maybe,maybe,no,RNA that can be plant/microbial or animal-derived,RNA that can be plant/microbial or animal-derived,Often derived from animal sources
 rice,yes,yes,yes,Plant-based cereal grain,Plant-based cereal grain,Plant-based cereal grain
 rna,maybe,maybe,no,Ribonucleic acid that can be plant/microbial or animal-derived,Ribonucleic acid that can be plant/microbial or animal-derived,Often derived from animal sources
-rosewater,yes,maybe,yes,Plant-based floral water from rose petals,May be processed with non-vegetarian processing aids,Plant-based floral water from rose petals
+rosewater,yes,yes,yes,Plant-based floral water from rose petals,May be processed with non-vegetarian processing aids,Plant-based floral water from rose petals
 royal jelly,maybe,maybe,no,Bee secretion - animal-derived product,Bee secretion - animal-derived product,Secretion from worker bees
 rutabaga,no,yes,yes,Root vegetable that grows underground - not suitable for Jain diet,Plant-based root vegetable,Plant-based root vegetable
 rutabagas,no,yes,yes,Root vegetables that grow underground - not suitable for Jain diet,Plant-based root vegetables,Plant-based root vegetables
@@ -430,8 +430,8 @@ sodium caseinate,maybe,maybe,no,Milk protein derivative,Milk protein derivative,
 sodium citrate,yes,yes,yes,Salt of citric acid - can be plant-derived,Salt of citric acid - can be plant-derived,Salt of citric acid - can be plant-derived
 sodium steroyl lactylate,maybe,maybe,no,Food additive that may contain animal-derived components,Food additive that may contain animal-derived components,Often contains animal-derived lactic acid
 sodium tallowate,maybe,maybe,no,Soap ingredient derived from animal tallow,Soap ingredient derived from animal tallow,Derived from animal fat
-sorbito,yes,maybe,yes,Sugar alcohol - can be plant-derived,May be processed with non-vegetarian processing aids,Sugar alcohol - can be plant-derived
-sorbitol may also contain allspice,yes,maybe,yes,Sugar alcohol with plant-based spice,May be processed with non-vegetarian processing aids,Sugar alcohol with plant-based spice
+sorbito,yes,yes,yes,Sugar alcohol - can be plant-derived,May be processed with non-vegetarian processing aids,Sugar alcohol - can be plant-derived
+sorbitol may also contain allspice,yes,yes,yes,Sugar alcohol with plant-based spice,May be processed with non-vegetarian processing aids,Sugar alcohol with plant-based spice
 sour cream,no,yes,no,Fermented dairy product may harm microorganisms,Dairy product - vegetarian-acceptable,Made from animal milk
 soy,yes,yes,yes,Plant-based legume - naturally occurring,Plant-based legume - naturally occurring,Plant-based legume - naturally occurring
 soy lecithin,yes,yes,yes,Plant-based emulsifier from soybeans,Plant-based emulsifier from soybeans,Plant-based emulsifier from soybeans
@@ -445,8 +445,8 @@ spirulina,no,yes,yes,Blue-green algae may involve microorganism cultivation,Blue
 sponge (luna and sea),maybe,maybe,no,Marine animal - filter-feeding organism,Marine animal - filter-feeding organism,Marine animal organism
 squalane,maybe,maybe,no,Hydrocarbon that can be synthetic or shark-derived,Hydrocarbon that can be synthetic or shark-derived,Often derived from shark liver oil
 squalene,maybe,maybe,no,Compound that can be synthetic or shark-derived,Compound that can be synthetic or shark-derived,Often derived from shark liver oil
-star anise,yes,maybe,yes,Plant-based spice - naturally occurring,May be processed with non-vegetarian processing aids,Plant-based spice - naturally occurring
-staranise,yes,maybe,yes,Plant-based spice - naturally occurring,May be processed with non-vegetarian processing aids,Plant-based spice - naturally occurring
+star anise,yes,yes,yes,Plant-based spice - naturally occurring,May be processed with non-vegetarian processing aids,Plant-based spice - naturally occurring
+staranise,yes,yes,yes,Plant-based spice - naturally occurring,May be processed with non-vegetarian processing aids,Plant-based spice - naturally occurring
 stearamide,maybe,maybe,no,Fatty acid derivative that can be plant or animal-derived,Fatty acid derivative that can be plant or animal-derived,Often contains animal-derived components
 stearamine,maybe,maybe,no,Fatty acid derivative that can be plant or animal-derived,Fatty acid derivative that can be plant or animal-derived,Often contains animal-derived components
 stearamine oxide,maybe,maybe,no,Synthetic compound that may use animal-derived starting materials,Synthetic compound that may use animal-derived starting materials,Often contains animal-derived components
@@ -470,7 +470,7 @@ stearyldimethyl amine,maybe,maybe,no,Amine compound that may use animal-derived 
 steroids,maybe,maybe,no,Hormonal compounds that can be synthetic or animal-derived,Hormonal compounds that can be synthetic or animal-derived,Often derived from animal sources
 sterols,maybe,maybe,no,Steroid alcohols that can be plant or animal-derived,Steroid alcohols that can be plant or animal-derived,Often contains animal-derived components
 strawberry,yes,yes,yes,Berry fruit - plant-based and naturally occurring,Berry fruit - plant-based and naturally occurring,Berry fruit - plant-based and naturally occurring
-sucralose,yes,maybe,yes,Artificial sweetener - synthetic compound,May be processed with non-vegetarian processing aids,Artificial sweetener - synthetic compound
+sucralose,yes,yes,yes,Artificial sweetener - synthetic compound,May be processed with non-vegetarian processing aids,Artificial sweetener - synthetic compound
 suede,maybe,maybe,no,Leather with napped finish - animal hide,Leather with napped finish - animal hide,Made from animal hide
 sugar,yes,yes,yes,Plant-based sweetener from sugarcane or sugar beet,Plant-based sweetener from sugarcane or sugar beet,Plant-based sweetener from sugarcane or sugar beet
 sugar cane,yes,yes,yes,Plant-based source of sugar - naturally occurring,Plant-based source of sugar - naturally occurring,Plant-based source of sugar - naturally occurring
@@ -491,11 +491,11 @@ tapioca syrup,yes,yes,yes,Plant-based sweetener from cassava root,Plant-based sw
 taro,no,yes,yes,Root tuber that grows underground - not suitable for Jain diet,Plant-based root vegetable,Plant-based root vegetable
 tbhq to maintain freshness,yes,yes,yes,Synthetic antioxidant preservative,Synthetic antioxidant preservative,Synthetic antioxidant preservative
 thiamin,yes,yes,yes,Vitamin B1 - can be synthetic or plant-derived,Vitamin B1 - can be synthetic or plant-derived,Vitamin B1 - can be synthetic or plant-derived
-thyme,yes,maybe,yes,Plant-based herb - naturally occurring,May be processed with non-vegetarian processing aids,Plant-based herb - naturally occurring
-titanium dioxide,yes,maybe,yes,Mineral-based white pigment,May be processed with non-vegetarian processing aids,Mineral-based white pigment
+thyme,yes,yes,yes,Plant-based herb - naturally occurring,May be processed with non-vegetarian processing aids,Plant-based herb - naturally occurring
+titanium dioxide,yes,yes,yes,Mineral-based white pigment,May be processed with non-vegetarian processing aids,Mineral-based white pigment
 tocopherols,yes,yes,yes,Vitamin E compounds - can be plant-derived,Vitamin E compounds - can be plant-derived,Vitamin E compounds - can be plant-derived
 tofu,yes,yes,yes,Plant-based protein from soybeans,Plant-based protein from soybeans,Plant-based protein from soybeans
-togarashi,yes,maybe,yes,Japanese spice blend - plant-based,May contain processing aids of unknown origin,Japanese spice blend - plant-based
+togarashi,yes,yes,yes,Japanese spice blend - plant-based,May contain processing aids of unknown origin,Japanese spice blend - plant-based
 tomatoes,yes,yes,yes,Plant-based fruit vegetable - naturally occurring,Plant-based fruit vegetable - naturally occurring,Plant-based fruit vegetable - naturally occurring
 toor,yes,yes,yes,Pigeon pea - plant-based legume,Pigeon pea - plant-based legume,Pigeon pea - plant-based legume
 toor dal,yes,yes,yes,Split pigeon pea - plant-based legume,Split pigeon pea - plant-based legume,Split pigeon pea - plant-based legume
@@ -559,11 +559,11 @@ natural flavor,maybe,maybe,maybe,"Source may be plant, animal, or microbial; not
 artificial flavor,maybe,maybe,maybe,"Synthetic origin, but may be processed with animal derivatives","Often synthetic, but animal-derived carriers sometimes used","Often synthetic, but animal-derived carriers sometimes used"
 natural and artificial flavor,maybe,maybe,maybe,"Synthetic origin, but may be processed with animal derivatives","Often synthetic, but animal-derived carriers sometimes used","Often synthetic, but animal-derived carriers sometimes used"
 natural color,maybe,maybe,maybe,"Some (e.g., beetroot) are Jain; others (e.g., turmeric) are not","Usually plant-derived, but not always","Some, like carmine (from insects), are not vegan"
-artificial color,maybe,yes,maybe,"Synthetic, but may be tested on animals or use bone char in processing",Typically not animal-derived,Some tested on animals or contain non-vegan carriers
+artificial color,maybe,maybe,maybe,"Synthetic, but may be tested on animals or use bone char in processing",Typically not animal-derived,Some tested on animals or contain non-vegan carriers
 natural and artificial color,maybe,maybe,maybe,Combined uncertainties of both categories,"May include non-veg colorants (e.g., cochineal)",Vegan status depends on exclusion of insect- or animal-derived pigments
 natural flavors,maybe,maybe,maybe,Plural doesn’t change the ambiguity — still undefined source,"Often synthetic, but animal-derived carriers sometimes used","Often synthetic, but animal-derived carriers sometimes used"
 artificial flavors,maybe,maybe,maybe,"Synthetic origin, but may be processed with animal derivatives",Same — depends on specific formulation,may use hidden animal derivatives
 natural and artificial flavors,maybe,maybe,maybe,"Blend can include animal, plant, or synthetic origins","Often synthetic, but animal-derived carriers sometimes used","Often synthetic, but animal-derived carriers sometimes used"
 natural colors,maybe,maybe,maybe,"Some may be Jain, others (e.g., root/tuber extracts) may not","Usually plant-derived, but not always","Usually plant-derived, but not always"
-artificial colors,maybe,yes,maybe,Synthetics are not always Jain-approved need to verify it,"Not animal-derived, generally",Some tested on animals or use non-vegan stabilizers
+artificial colors,maybe,maybe,maybe,Synthetics are not always Jain-approved need to verify it,"Not animal-derived, generally",Some tested on animals or use non-vegan stabilizers
 natural and artificial colors,maybe,maybe,maybe,"Blend can include animal, plant, or synthetic origins",Could be from either animal or plant or synthetic,"Blend can include animal, plant, or synthetic origins"
