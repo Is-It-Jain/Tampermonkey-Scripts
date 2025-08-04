@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         Amazon Ingredients Extractor
+// @name         Amazon Ingredients Extractor 2
 // @namespace    tampermonkey.net/
-// @version      2.0.0.0
+// @version      2.0.0.1
 // @description  Extract ingredients from Amazon product pages
 // @author       Parshwa Shah
 // @match        https://www.amazon.com/*
@@ -9,6 +9,9 @@
 // ==/UserScript==
 const strTest = str => /^[\(\)\[\]a-z;&%, 0-9]*$/gi.test(str);
 var displayButton = true;
+
+let DEVMODE = true;
+let MAYBES = new Map();
 
 var ingredientsMap = new Map();
 var ingredientsList = [];
@@ -86,86 +89,20 @@ function add(data){
     request.send(JSON.stringify(data));
 }
 
-function levenshtein(a, b) {
-  const m = a.length;
-  const n = b.length;
-  const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (a[i - 1].toLowerCase() === b[j - 1].toLowerCase()) {
-        dp[i][j] = dp[i - 1][j - 1];
-      } else {
-        dp[i][j] = 1 + Math.min(
-          dp[i - 1][j],    // delete
-          dp[i][j - 1],    // insert
-          dp[i - 1][j - 1] // substitute
-        );
-      }
-    }
-  }
-
-  return dp[m][n];
+function check (name) {
+    return name === "natural flavor" ||
+        name === "artificial flavor" ||
+        name === "natural and artificial flavor" ||
+        name === "natural color" ||
+        name === "artificial color" ||
+        name === "natural and artificial color" ||
+        name === "natural flavors" ||
+        name === "artificial flavors" ||
+        name === "natural and artificial flavors" ||
+        name === "natural colors" ||
+        name === "artificial colors" ||
+        name === "natural and artificial colors"
 }
-
-function findWordMatchScore(ingredient, input) {
-  const ingredientWords = ingredient.toLowerCase().split(/\s+/);
-  const inputWords = input.toLowerCase().split(/\s+/);
-
-  let bestWordDistance = Infinity;
-
-  for (const iw of ingredientWords) {
-    for (const tw of inputWords) {
-      if (iw === tw) return { distance: 0, word: iw }; // exact match
-      const dist = levenshtein(iw, tw);
-      if (dist < bestWordDistance) {
-        bestWordDistance = dist;
-      }
-    }
-  }
-
-  return { distance: bestWordDistance };
-}
-
-function findNearestIngredientMatchWithConfidence(ingredientList, input) {
-  let bestMatch = null;
-  let bestScore = Infinity;
-
-  for (const ingredient of ingredientList) {
-    const { distance } = findWordMatchScore(ingredient, input);
-    if (distance < bestScore) {
-      bestScore = distance;
-      bestMatch = ingredient;
-    }
-  }
-
-  // Confidence = 1 - (normalized word-level distance)
-  // Normalized using average word length (or 10 as safe default)
-  const averageWordLength = 6;
-  const confidence = Math.max(0, 1 - bestScore / averageWordLength);
-
-  return {
-    match: bestMatch,
-    confidence: confidence.toFixed(2)
-  };
-}
-
-function check (name) {return
-                       name === "natural flavor" ||
-                       name === "artificial flavor" ||
-                       name === "natural and artificial flavor" ||
-                       name === "natural color" ||
-                       name === "artificial color" ||
-                       name === "natural and artificial color" ||
-                       name === "natural flavors" ||
-                       name === "artificial flavors" ||
-                       name === "natural and artificial flavors" ||
-                       name === "natural colors" ||
-                       name === "artificial colors" ||
-                       name === "natural and artificial colors"}
 
 function csvToJson(csv) {
     const lines = csv.trim().split('\n');
@@ -175,9 +112,6 @@ function csvToJson(csv) {
         return Object.fromEntries(headers.map((h, i) => [h.trim(), values[i]?.trim()]));
     });
 }
-
-
-
 
 fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason.csv')
 .then(response => {
@@ -192,25 +126,26 @@ fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason
         ingredientsList.push(key);
         ingredientsMap.set(key, row);
     }
+    window.ingredientsMap = ingredientsMap;
+    console.log(ingredientsMap);
 })
 .catch(err => {
     console.error("Failed to fetch CSV:", err);
 });
 
-function computeJainSinglIngredient(ingredient) {
-    const name = normalizeName(ingredient.name);
-    if (ingredientsMap.get(name)) return ingredientsMap.get(name).jain;
-    if (ingredient.jain !== null) return ingredient.jain;
-
-    const nearestMatch = findNearestIngredientMatchWithConfidence(ingredientsList, name);
-    if (nearestMatch.confidence > 0.9 && ingredientsMap.get(nearestMatch.match)) {
-        return ingredientsMap.get(nearestMatch.match).jain;
+function checkIngredient (ingredient, type) {
+    let ingredientName = ingredient.name;
+    if (ingredientsMap.has(ingredientName)) {
+        return ingredientsMap.get(ingredientName)[type];
     }
-    return "MAYBE";
+    if(DEVMODE){
+        MAYBES.set(ingredientName, true);
+    }
+    return "maybe";
 }
 
 function computeJain (ingredients) {
-    var jain = "YES";
+    var jain = "yes";
 
     var allJain = true;
     var anyNonVeg = false;
@@ -221,68 +156,57 @@ function computeJain (ingredients) {
         var ingredient = ingredients [i];
         if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
             if(ingredients[i].jain == null){
-                ingredients[i].jain = computeJainSinglIngredient(ingredients[i]);
+                ingredients[i].jain = checkIngredient(ingredients[i], "jain");
             }
             let subJain = ingredients[i].jain;
-            if (subJain === "NO") { // if subIngredient is not jain
+            if (subJain === "no") { // if subIngredient is not jain
                 allJain = allJain && false;
-                return "NO";
-            } else if (subJain === "YES") { // if subIngredient is jain
+                return "no";
+            } else if (subJain === "yes") { // if subIngredient is jain
                 allJain = allJain && true;
-            } else if (subJain === "MAYBE") { // if subIngredient is not sure jain
+            } else if (subJain === "maybe") { // if subIngredient is not sure jain
                 allJain = allJain && false;
             }
         } else {
             if(ingredients[i].jain == null){
-                ingredients[i].jain = computeJainSinglIngredient(ingredients[i]);
+                ingredients[i].jain = checkIngredient(ingredients[i], "jain");
             }
             let jainVal = ingredients[i].jain;
-            if (jainVal === "NO") {
+            if (jainVal === "no") {
                 allJain = allJain && false;
-                return "NO";
-            } else if (jainVal === "YES") {
+                return "no";
+            } else if (jainVal === "yes") {
                 allJain = allJain && true;
-            } else if (jainVal === "MAYBE") {
+            } else if (jainVal === "maybe") {
                 allJain = allJain && false;
             }
         }
     }
 
     if (allJain && !anyNonVeg) {
-        jain = "YES"
+        jain = "yes"
     } else if (anyNonVeg || anyNonJain) {
-        jain = "NO"
+        jain = "no"
     } else {
-        jain = "MAYBE"
+        jain = "maybe"
     }
     return jain;
 }
 
-function computeVegSinglIngredient(ingredient) {
-    const name = normalizeName(ingredient.name);
-    if (ingredientsMap.get(name)) return ingredientsMap.get(name).vegetarian;
-    if (ingredient.vegetarian !== null) return ingredient.vegetarian;
-
-    const nearestMatch = findNearestIngredientMatchWithConfidence(ingredientsList, name);
-    if (nearestMatch.confidence > 0.9 && ingredientsMap.get(nearestMatch.match)) {
-        return ingredientsMap.get(nearestMatch.match).vegetarian;
-    }
-    return "MAYBE";
-}
-
-function computeVeg (ingredients) {
+function computeVegetarian (ingredients) {
+    //TODO: change similar to compute Jain also change computeVegan has bugs.
     let veg = true;
     let maybe = false;
     for (let i in ingredients) {
         let ing = ingredients[i];
         if (ing.subIngredients) {
             if (ingredients[i].vegetarian == null){
-                ingredients[i].vegetarian = computeVegSinglIngredient(ingredients[i]);
+                ingredients[i].vegetarian = checkIngredient(ingredients[i], "vegetarian");
             }
             let subVeg = ingredients[i].vegetarian;
-            if (subVeg === "NO"){
-                return "NO";
-            } else if(subVeg === "YES"){
+            if (subVeg === "no"){
+                return "no";
+            } else if(subVeg === "yes"){
                 veg = veg && true;
             } else {
                 maybe = maybe || true;
@@ -290,47 +214,24 @@ function computeVeg (ingredients) {
             continue;
         }
         if (ingredients[i].vegetarian == null){
-            ingredients[i].vegetarian = computeVegSinglIngredient(ingredients[i]);
+            ingredients[i].vegetarian = checkIngredient(ingredients[i], "vegetarian");
         }
         let isVeg = ingredients[i].vegetarian;
-        if (isVeg == "YES") {
+        if (isVeg == "yes") {
             veg &= true;
         }
-        else if (isVeg == "NO") {
-            return "NO";
+        else if (isVeg == "no") {
+            return "no";
         }
         else {
-            /*
-            let tmp = findNearestIngredientMatchWithConfidence( allIngredients, ingredients[i].name );
-            if (tmp.confidence > 0.9){
-                console.log(`${ingredients[i].name} to ${tmp.match} with confidence ${tmp.confidence}`);
-                let b = computeVegSinglIngredient({name:tmp.match})
-                if (b == "YES") { veg &= true}
-                else if (b == "NO") { return "NO" }
-                else {maybe = maybe || true;}
-            }
-            else {maybe = maybe || true;}
-            */
             maybe = maybe || true;
         }
     }
     if (maybe) {
-        return "MAYBE";
+        return "maybe";
     } else {
-        return "YES";
+        return "yes";
     }
-}
-
-function computeVeganSinglIngredient(ingredient) {
-    const name = normalizeName(ingredient.name);
-    if (ingredientsMap.get(name)) return ingredientsMap.get(name).vegan;
-    if (ingredient.vegan !== null) return ingredient.vegan;
-
-    const nearestMatch = findNearestIngredientMatchWithConfidence(ingredientsList, name);
-    if (nearestMatch.confidence > 0.9 && ingredientsMap.get(nearestMatch.match)) {
-        return ingredientsMap.get(nearestMatch.match).vegan;
-    }
-    return "MAYBE";
 }
 
 function computeVegan(ingredients){
@@ -340,12 +241,12 @@ function computeVegan(ingredients){
         let ing = ingredients[i];
         if (ing.subIngredients) {
             if (ingredients[i].vegan == null){
-                ingredients[i].vegan = computeVeganSinglIngredient(ingredients[i]);
+                ingredients[i].vegan = checkIngredient(ingredients[i], "vegan");
             }
             let subVeg = ingredients[i].vegan;
-            if (subVeg === "NO"){
-                return "NO";
-            } else if(subVeg === "YES"){
+            if (subVeg === "no"){
+                return "no";
+            } else if(subVeg === "yes"){
                 veg = veg && true;
             } else {
                 maybe = maybe || true;
@@ -353,34 +254,23 @@ function computeVegan(ingredients){
             continue
         }
         if (ingredients[i].vegan == null){
-            ingredients[i].vegan = computeVeganSinglIngredient(ingredients[i]);
+            ingredients[i].vegan = checkIngredient(ingredients[i], "vegan");
         }
         let isVegan = ingredients[i].vegan;
-        if (isVegan == "YES") {
+        if (isVegan == "yes") {
             veg &= true;
         }
-        else if (isVegan == "NO") {
-            return "NO";
+        else if (isVegan == "no") {
+            return "no";
         }
         else {
-            /*
-            let tmp = findNearestIngredientMatchWithConfidence( allIngredients, ingredients[i].name );
-            if (tmp.confidence > 0.9){
-                console.log(`${ingredients[i].name} to ${tmp.match} with confidence ${tmp.confidence}`);
-                let b = computeVeganSinglIngredient({name:tmp.match})
-                if (b == "YES") { veg &= true}
-                else if (b == "NO") { return "NO" }
-                else {maybe = maybe || true;}
-            }
-            else {maybe = maybe || true;}
-            */
             maybe = maybe || true;
         }
     }
     if (maybe) {
-        return "MAYBE";
+        return "maybe";
     }else {
-        return "YES";
+        return "yes";
     }
 }
 
@@ -398,10 +288,7 @@ function displayIngredients (ingredients, subCount = 0) {
         let jain = ingredients[i].jain;
         let veg = ingredients[i].vegetarian;
         let vegan = ingredients[i].vegan;
-        if (check(ingredients[i].name)){
-        }else{
-            displayButton &= ! (jain === "MAYBE") && !(veg === "MAYBE") && !(vegan === "MAYBE()");
-        }
+        displayButton &= ! (jain === "maybe") && !(veg === "maybe") && !(vegan === "maybe()");
         displayString += "<tr>";
         displayString += "<td>" + sub + ingredients[i].name + "</td>";
         displayString += "<td>" + jain + "</td>";
@@ -419,6 +306,15 @@ function displayIngredientsTable (ingredients) {
     var displayString = "<table><tr><th>Name</th><th>Jain?</th><th>Vegetarian?</th><th>Vegan?</th></tr>";
 
     displayString += displayIngredients(ingredients);
+    if(DEVMODE){
+        let array = MAYBES.keys().toArray()
+        let data = ""
+        for (let i in array){
+            let dat = array[i]
+            data += "<tr><td>" + dat + "</td></tr>"
+        }
+        displayString += data;
+    }
 
     displayString += "</table>";
     return displayString;
@@ -476,7 +372,7 @@ function extractIngredients() {
 
             if (text) {
                 ingredients = text;
-                otherIngredientsAsJson = convertToJsonArray(ingredients);
+                otherIngredientsAsJson = convertToJsonArray(ingredients)[0];
                 ingredientsList.push(...otherIngredientsAsJson);
             }
         }
@@ -497,24 +393,6 @@ function extractIngredients() {
     const nutritionsDivElement = document.querySelector('div.nutrition-panel');
     const nutritionsFacts = {};
 
-
-    /*
-
-            const imageDivElement = document.querySelector('div.slick-list');
-            const images = [];
-
-            if (landingImage) {
-                images.push(landingImage.src);
-            }
-
-            if (imageDivElement != undefined) {
-                const imgElements = imageDivElement.querySelectorAll('img');
-                imgElements.forEach(img => {
-                    let src = img.src;
-                    images.push(src);
-                });
-            }*/
-
     const container = document.querySelector('#main-image-container');
     const imgElements = container.querySelectorAll('img');
     const imageSrcs = Array.from(imgElements)
@@ -533,16 +411,16 @@ function extractIngredients() {
             const valueSpan = labelSpan.nextElementSibling;
             if (valueSpan) {
                 const upcValue = valueSpan.textContent.trim();
-                upcValues = upcValue.split(/\s+/); // splits on one or more spaces
+                upcValues = upcValue.split(/\s+/);
                 console.log('UPC:', upcValues);
             }
-            break; // stop after finding the first UPC
+            break;
         }
     }
 
 
     let jain = computeJain(ingredientsList);
-    let veg = computeVeg(ingredientsList);
+    let veg = computeVegetarian(ingredientsList);
     let vegan = computeVegan(ingredientsList);
 
     let productDetail = {
@@ -560,7 +438,7 @@ function extractIngredients() {
                         "vegan":vegan
                     },
                     {
-                        "tithi":"MAYBE"
+                        "tithi":"maybe"
                     }
                 ],
                 "dietary":dietryList,
@@ -808,7 +686,9 @@ function splitIngredient(item2) {
     return [name, sub];
 }
 
-function convertToJsonArraySub(input) {
+
+
+function convertToJsonArray(input) {
     input = input
         .split(/CONTAINS:/gi)[0]
         .replace(/contains less than.*?% of/gi, "")
@@ -833,7 +713,9 @@ function convertToJsonArraySub(input) {
         } else {
             if (char === '(') depth++;
             else if (char === ')') depth--;
-            current += char;
+            if (strTest(char)) {
+                current += char;
+            }
         }
     }
 
@@ -847,14 +729,7 @@ function convertToJsonArraySub(input) {
     const structured = finalList.map(item => {
         const [name, subString] = splitIngredient(item);
         let ingredient = {
-            name: name.replace(/\[.*?\]/g, '')
-            .replace(/contains less than.*?% of/gi, '')
-            .replace(/as a preservative/gi, '')
-            .replace(/\(.*?\)/g, '')
-            .replace(/[^a-z0-9\s]/gi, '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .toLowerCase(),
+            name: normalizeName(name),
             jain: null,
             vegetarian: null,
             vegan: null,
@@ -862,7 +737,7 @@ function convertToJsonArraySub(input) {
         };
 
         if (subString) {
-            const [subIngredients, isSpecialCase2, specialCaseData2] = convertToJsonArraySub(subString);
+            const [subIngredients, isSpecialCase2, specialCaseData2] = convertToJsonArray(subString);
             ingredient.subIngredients = subIngredients;
 
             if (ingredient.name === "emulsifier") {
@@ -881,94 +756,14 @@ function convertToJsonArraySub(input) {
             }
         }
 
-        ingredient.vegan = computeVeganSinglIngredient(ingredient);
-        ingredient.vegetarian = computeVegSinglIngredient(ingredient);
-        ingredient.jain = computeJainSinglIngredient(ingredient);
+        ingredient.vegan = checkIngredient(ingredient, "vegan");
+        ingredient.vegetarian = checkIngredient(ingredient, "vegetarian");
+        ingredient.jain = checkIngredient(ingredient, "jain");
 
         return ingredient;
     });
 
     return [structured, isSpecialCase, specialCaseData];
-}
-
-function convertToJsonArray(input) {
-    input = input
-        .split(/CONTAINS:/gi)[0]
-        .replace(/contains less than.*?% of/gi, "")
-        .replace(/\.$/g, '')
-        .replace(/\[/g, '(')
-        .replace(/\]/g, ')')
-        .replace(/\s+/g, ' ')
-        .replace(/ AND /gi, ', ')
-        .replace(/ OR /gi, ', ')
-        .replace(/ ,/gi, ',');
-
-    const result = [];
-    let current = '';
-    let depth = 0;
-
-    for (let i = 0; i < input.length; i++) {
-        const char = input[i];
-
-        if ((char === ',' || char === ';') && depth === 0) {
-            if (current.trim()) result.push(current.trim());
-            current = '';
-            continue;
-        }
-
-        if (char === '(') depth++;
-        else if (char === ')') depth--;
-
-        if (strTest(char)) {
-            current += char;
-        }
-    }
-
-    if (current.trim()) result.push(current.trim());
-
-    const finalList = result.map(item => item.replace(/^and\s+/i, '').trim());
-
-    const structured = finalList.map(item => {
-        const [name, subString] = splitIngredient(item);
-        let ingredient = {
-            name: name.replace(/\[.*?\]/g, '')
-            .replace(/contains less than.*?% of/gi, '')
-            .replace(/as a preservative/gi, '')
-            .replace(/\(.*?\)/g, '')
-            .replace(/[^a-z0-9\s]/gi, '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .toLowerCase(),
-            jain: null,
-            vegetarian: null,
-            vegan: null,
-            subIngredients: null
-        };
-
-        if (subString) {
-            const [subIngredients, isSpecialCase, specialCaseData] = convertToJsonArraySub(subString);
-            ingredient.subIngredients = subIngredients;
-
-            if (ingredient.name === "emulsifier") {
-                ingredient.subIngredients.push({
-                    name: "emulsifier",
-                    jain: ingredient.jain,
-                    vegetarian: ingredient.vegetarian,
-                    vegan: ingredient.vegan,
-                    subIngredients: specialCaseData
-                });
-            }
-        }
-
-        ingredient.vegan = computeVeganSinglIngredient(ingredient);
-        ingredient.vegetarian = computeVegSinglIngredient(ingredient);
-        ingredient.jain = computeJainSinglIngredient(ingredient);
-
-        return ingredient;
-    });
-
-    console.log("convertToJsonArray = " + JSON.stringify(structured, null, 3));
-    return structured;
 }
 
 (function() {
