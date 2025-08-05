@@ -52,8 +52,6 @@ function callback(error, responseJson) {
         let displayDivElement = document.querySelector("div#display-box");
         displayDivElement.appendChild(popup);
         document.getElementById("save-button").hidden = true;
-
-
     }
 }
 
@@ -80,19 +78,29 @@ function add(data){
     request.send(JSON.stringify(data));
 }
 
-function check (name) {
-    return name === "natural flavor" ||
-        name === "artificial flavor" ||
-        name === "natural and artificial flavor" ||
-        name === "natural color" ||
-        name === "artificial color" ||
-        name === "natural and artificial color" ||
-        name === "natural flavors" ||
-        name === "artificial flavors" ||
-        name === "natural and artificial flavors" ||
-        name === "natural colors" ||
-        name === "artificial colors" ||
-        name === "natural and artificial colors"
+function check(name) {
+    // Tons of typos and variants for ambiguous ingredients
+    const ambiguous = [
+        "natural flavor", "artificial flavor", "natural and artificial flavor",
+        "natural color", "artificial color", "natural and artificial color",
+        "natural flavors", "artificial flavors", "natural and artificial flavors",
+        "natural colors", "artificial colors", "natural and artificial colors",
+        "natral flavor", "natrul flavor", "naturl flavor", "naturall flavor", "natural falvor", "natural flaver", "natural flaovr", "natural flovour", "natural flavo", "natural flvour", "natural flvr", "natural flavoer",
+        "artifical flavor", "artificial falvor", "artificial flaver", "artificial flaovr", "artificial flovour", "artificial flavo", "artificial flvour", "artificial flvr", "artificial flavoer",
+        "natural and artifical flavor", "natural and artificial falvor", "natural and artificial flaver", "natural and artificial flaovr", "natural and artificial flovour", "natural and artificial flavo", "natural and artificial flvour", "natural and artificial flvr", "natural and artificial flavoer",
+        "natural colour", "artificial colour", "natural and artificial colour", "natural colours", "artificial colours", "natural and artificial colours",
+        "natral color", "natrul color", "naturl color", "naturall color", "natural colro", "natural colur", "natural colr", "natural colro", "natural colro", "natural colro",
+        "artifical color", "artificial colro", "artificial colur", "artificial colr", "artificial colro", "artificial colro",
+        "natural and artifical color", "natural and artificial colro", "natural and artificial colur", "natural and artificial colr", "natural and artificial colro",
+        "natural falvours", "natural flavoers", "natural flovors", "natural flvours", "natural flvr", "natural flavoers",
+        "artificial falvours", "artificial flavoers", "artificial flovors", "artificial flvours", "artificial flvr", "artificial flavoers",
+        "natural and artificial falvours", "natural and artificial flavoers", "natural and artificial flovors", "natural and artificial flvours", "natural and artificial flvr", "natural and artificial flavoers",
+        "natural colros", "natural coluors", "natural colrs", "natural colroes",
+        "artificial colros", "artificial coluors", "artificial colrs", "artificial colroes",
+        "natural and artificial colros", "natural and artificial coluors", "natural and artificial colrs", "natural and artificial colroes"
+    ];
+    name = normalizeName(name);
+    return ambiguous.includes(name);
 }
 
 function csvToJson(csv) {
@@ -154,105 +162,6 @@ if (DEVMODE) {
         }
     }, 1200);
 }
-// Separate ingredient processing (parsing) and identification (jain/veg/vegan)
-function processIngredients(input) {
-    input = input
-        .split(/CONTAINS:/gi)[0]
-        .replace(/contains less than.*?% of/gi, "")
-        .replace(/\.$/g, '')
-        .replace(/\[/g, '(')
-        .replace(/\]/g, ')')
-        .replace(/\s+/g, ' ')
-        .replace(/ AND /gi, ', ')
-        .replace(/ OR /gi, ', ')
-        .replace(/ ,/gi, ',');
-
-    const result = [];
-    let current = '';
-    let depth = 0;
-
-    for (let char of input) {
-        if ((char === ',' || char === ';') && depth === 0) {
-            if (current.trim()) {
-                result.push(current.trim());
-            }
-            current = '';
-        } else {
-            if (char === '(') depth++;
-            else if (char === ')') depth--;
-            if (strTest(char)) {
-                current += char;
-            }
-        }
-    }
-
-    if (current.trim()) result.push(current.trim());
-
-    const finalList = result.map(item => item.replace(/^and\s+/i, '').trim());
-
-    let isSpecialCase = false;
-    let specialCaseData = undefined;
-
-    const structured = finalList.map(item => {
-        const [name, subString] = splitIngredient(item);
-        let ingredient = {
-            name: normalizeName(name),
-            jain: null,
-            vegetarian: null,
-            vegan: null,
-            subIngredients: null
-        };
-        if (ingredient.name.replace(/[0-9]/gi, '') == "") {return {name: "NOT REAL"};}
-
-        if (subString) {
-            const [subIngredients, isSpecialCase2, specialCaseData2] = processIngredients(subString);
-            ingredient.subIngredients = subIngredients;
-
-            if (ingredient.name === "emulsifier") {
-                isSpecialCase = true;
-                specialCaseData = subIngredients;
-            }
-
-            if (isSpecialCase2) {
-                ingredient.subIngredients.push({
-                    name: "emulsifier",
-                    jain: ingredient.jain,
-                    vegetarian: ingredient.vegetarian,
-                    vegan: ingredient.vegan,
-                    subIngredients: specialCaseData2
-                });
-            }
-        }
-        // Identification logic here (was in identifyIngredient)
-        const types = ["jain", "vegetarian", "vegan"];
-        for (const type of types) {
-            if (ingredient[type] == null) {
-                if (ingredientsMap.has(ingredient.name)) {
-                    ingredient[type] = ingredientsMap.get(ingredient.name)[type];
-                } else {
-                    // Try partial match
-                    let arr = Array.from(ingredientsMap.keys());
-                    for (let j = 0; j < arr.length; j++) {
-                        if (ingredient.name.includes(arr[j])) {
-                            ingredient[type] = ingredientsMap.get(arr[j])[type];
-                            break;
-                        }
-                    }
-                    if (ingredient[type] == null) {
-                        if (DEVMODE) {
-                            MAYBES.set(ingredient.name, true);
-                        }
-                        ingredient[type] = "maybe";
-                    }
-                }
-            }
-        }
-        return ingredient;
-    }).filter(item => item.name !== "NOT REAL");
-
-    return [structured, isSpecialCase, specialCaseData];
-}
-
 
 // Always fetch remote CSV as fallback/default
 fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason.csv')
@@ -278,13 +187,15 @@ fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason
 function checkIngredient (ingredient, type) {
     let ingredientName = ingredient.name;
     // If the ingredient has subIngredients, use the appropriate compute function and do NOT add to MAYBES
+    console.log(ingredient)
     if (ingredient.subIngredients) {
+        let nonAmbiguousSubs = ingredient.subIngredients.filter(sub => !check(sub.name));
         if (type === "jain") {
-            return computeJain(ingredient.subIngredients);
+            return computeJain(nonAmbiguousSubs);
         } else if (type === "vegetarian") {
-            return computeVegetarian(ingredient.subIngredients);
+            return computeVegetarian(nonAmbiguousSubs);
         } else if (type === "vegan") {
-            return computeVegan(ingredient.subIngredients);
+            return computeVegan(nonAmbiguousSubs);
         } else {
             return "maybe";
         }
@@ -308,12 +219,14 @@ function checkIngredient (ingredient, type) {
 
 function computeJain (ingredients) {
     let foundMaybe = false;
+    let foundValid = false;
     for (let i = 0; i < ingredients.length; i++) {
         let ingredient = ingredients[i];
         if (check(ingredient.name)) {
-            ingredient.jain = "maybe";
+            // skip this ingredient entirely
             continue;
         }
+        foundValid = true;
         let value;
         if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
             value = checkIngredient(ingredient, "jain");
@@ -329,17 +242,19 @@ function computeJain (ingredients) {
             foundMaybe = true;
         }
     }
+    if (!foundValid) return "yes";
     return foundMaybe ? "maybe" : "yes";
 }
 
 function computeVegetarian (ingredients) {
     let foundMaybe = false;
+    let foundValid = false;
     for (let i = 0; i < ingredients.length; i++) {
         let ing = ingredients[i];
         if (check(ing.name)) {
-            ing.vegetarian = "maybe";
-            continue;
+            continue; // skip this ingredient entirely
         }
+        foundValid = true;
         let value;
         if (ing.subIngredients && ing.subIngredients.length > 0) {
             value = checkIngredient(ing, "vegetarian");
@@ -355,17 +270,19 @@ function computeVegetarian (ingredients) {
             foundMaybe = true;
         }
     }
+    if (!foundValid) return "yes";
     return foundMaybe ? "maybe" : "yes";
 }
 
 function computeVegan(ingredients){
     let foundMaybe = false;
+    let foundValid = false;
     for (let i = 0; i < ingredients.length; i++) {
         let ing = ingredients[i];
         if (check(ing.name)) {
-            ing.vegan = "maybe";
-            continue;
+            continue; // skip this ingredient entirely
         }
+        foundValid = true;
         let value;
         if (ing.subIngredients && ing.subIngredients.length > 0) {
             value = checkIngredient(ing, "vegan");
@@ -381,6 +298,7 @@ function computeVegan(ingredients){
             foundMaybe = true;
         }
     }
+    if (!foundValid) return "yes";
     return foundMaybe ? "maybe" : "yes";
 }
 
@@ -477,7 +395,7 @@ function extractIngredients() {
             const text = element.firstChild.textContent.trim();
             if (text) {
                 ingredients = text;
-                ingredientsListForDiet = processIngredients(ingredients)[0];
+                ingredientsListForDiet = convertToJsonArray(ingredients)[0];
             }
         }
     }
