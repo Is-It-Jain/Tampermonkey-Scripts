@@ -4,7 +4,7 @@
 // @version      1
 // @description  Extract ingredients from Amazon product pages
 // @author       Parshwa Shah
-// @match        https://amazon.com/*
+// @match        https://*.amazon.com/*
 // @grant        none
 // ==/UserScript==
 
