@@ -1,12 +1,3 @@
-// ==UserScript==
-// @name         Amazon Ingredients Extractor 2
-// @namespace    tampermonkey.net/
-// @version      2.0.0.1
-// @description  Extract ingredients from Amazon product pages
-// @author       Parshwa Shah
-// @match        https://www.amazon.com/*
-// @grant        none
-// ==/UserScript==
 const strTest = str => /^[\(\)\[\]a-z;&%, 0-9]*$/gi.test(str);
 var displayButton = true;
 
@@ -113,169 +104,284 @@ function csvToJson(csv) {
     });
 }
 
-fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason.csv')
-.then(response => {
-    if (!response.ok) throw new Error('Failed to fetch CSV');
-    return response.text();
-})
-.then(csv => {
-    const jsonData = csvToJson(csv);
-    console.log("CSV loaded", jsonData.length);
-    for (const row of jsonData) {
-        const key = normalizeName(row.name);
-        ingredientsList.push(key);
-        ingredientsMap.set(key, row);
+let startCalculation = false;
+
+if (DEVMODE) {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.csv';
+    fileInput.id = 'DEVCSVUPLOAD';
+    fileInput.style.position = 'fixed';
+    fileInput.style.top = '10px';
+    fileInput.style.left = '10px';
+    fileInput.style.zIndex = 10001;
+    fileInput.title = 'Upload custom ingredients CSV';
+    document.body.appendChild(fileInput);
+
+    // Start extraction after upload
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const csv = evt.target.result;
+            const jsonData = csvToJson(csv);
+            if (!jsonData || !jsonData.length) {
+                alert('CSV file is empty or invalid.');
+                return;
+            }
+            ingredientsList.length = 0;
+            ingredientsMap.clear();
+            for (const row of jsonData) {
+                const key = normalizeName(row.name);
+                ingredientsList.push(key);
+                ingredientsMap.set(key, row);
+            }
+            window.ingredientsMap = ingredientsMap;
+            alert('Custom CSV loaded: ' + jsonData.length + ' rows.');
+            if (typeof window.startLoad === 'function') {
+                startCalculation = true;
+                window.startLoad();
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    // Fallback to remote fetch if no upload after short delay
+    setTimeout(() => {
+        if (typeof window.startLoad === 'function') {
+            window.startLoad();
+        }
+    }, 1200);
+}
+// Separate ingredient processing (parsing) and identification (jain/veg/vegan)
+function processIngredients(input) {
+    input = input
+        .split(/CONTAINS:/gi)[0]
+        .replace(/contains less than.*?% of/gi, "")
+        .replace(/\.$/g, '')
+        .replace(/\[/g, '(')
+        .replace(/\]/g, ')')
+        .replace(/\s+/g, ' ')
+        .replace(/ AND /gi, ', ')
+        .replace(/ OR /gi, ', ')
+        .replace(/ ,/gi, ',');
+
+    const result = [];
+    let current = '';
+    let depth = 0;
+
+    for (let char of input) {
+        if ((char === ',' || char === ';') && depth === 0) {
+            if (current.trim()) {
+                result.push(current.trim());
+            }
+            current = '';
+        } else {
+            if (char === '(') depth++;
+            else if (char === ')') depth--;
+            if (strTest(char)) {
+                current += char;
+            }
+        }
     }
-    window.ingredientsMap = ingredientsMap;
-    console.log(ingredientsMap);
-})
-.catch(err => {
-    console.error("Failed to fetch CSV:", err);
-});
+
+    if (current.trim()) result.push(current.trim());
+
+    const finalList = result.map(item => item.replace(/^and\s+/i, '').trim());
+
+    let isSpecialCase = false;
+    let specialCaseData = undefined;
+
+    const structured = finalList.map(item => {
+        const [name, subString] = splitIngredient(item);
+        let ingredient = {
+            name: normalizeName(name),
+            jain: null,
+            vegetarian: null,
+            vegan: null,
+            subIngredients: null
+        };
+        if (ingredient.name.replace(/[0-9]/gi, '') == "") {return {name: "NOT REAL"};}
+
+        if (subString) {
+            const [subIngredients, isSpecialCase2, specialCaseData2] = processIngredients(subString);
+            ingredient.subIngredients = subIngredients;
+
+            if (ingredient.name === "emulsifier") {
+                isSpecialCase = true;
+                specialCaseData = subIngredients;
+            }
+
+            if (isSpecialCase2) {
+                ingredient.subIngredients.push({
+                    name: "emulsifier",
+                    jain: ingredient.jain,
+                    vegetarian: ingredient.vegetarian,
+                    vegan: ingredient.vegan,
+                    subIngredients: specialCaseData2
+                });
+            }
+        }
+        // Identification logic here (was in identifyIngredient)
+        const types = ["jain", "vegetarian", "vegan"];
+        for (const type of types) {
+            if (ingredient[type] == null) {
+                if (ingredientsMap.has(ingredient.name)) {
+                    ingredient[type] = ingredientsMap.get(ingredient.name)[type];
+                } else {
+                    // Try partial match
+                    let arr = Array.from(ingredientsMap.keys());
+                    for (let j = 0; j < arr.length; j++) {
+                        if (ingredient.name.includes(arr[j])) {
+                            ingredient[type] = ingredientsMap.get(arr[j])[type];
+                            break;
+                        }
+                    }
+                    if (ingredient[type] == null) {
+                        if (DEVMODE) {
+                            MAYBES.set(ingredient.name, true);
+                        }
+                        ingredient[type] = "maybe";
+                    }
+                }
+            }
+        }
+        return ingredient;
+    }).filter(item => item.name !== "NOT REAL");
+
+    return [structured, isSpecialCase, specialCaseData];
+}
+
+
+// Always fetch remote CSV as fallback/default
+fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason.csv')
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch CSV');
+        return response.text();
+    })
+    .then(csv => {
+        const jsonData = csvToJson(csv);
+        console.log("CSV loaded", jsonData.length);
+        for (const row of jsonData) {
+            const key = normalizeName(row.name);
+            ingredientsList.push(key);
+            ingredientsMap.set(key, row);
+        }
+        window.ingredientsMap = ingredientsMap;
+        console.log(ingredientsMap);
+    })
+    .catch(err => {
+        console.error("Failed to fetch CSV:", err);
+    });
 
 function checkIngredient (ingredient, type) {
     let ingredientName = ingredient.name;
+    // If the ingredient has subIngredients, use the appropriate compute function and do NOT add to MAYBES
+    if (ingredient.subIngredients) {
+        if (type === "jain") {
+            return computeJain(ingredient.subIngredients);
+        } else if (type === "vegetarian") {
+            return computeVegetarian(ingredient.subIngredients);
+        } else if (type === "vegan") {
+            return computeVegan(ingredient.subIngredients);
+        } else {
+            return "maybe";
+        }
+    }
+    // Otherwise, check the map as before
     if (ingredientsMap.has(ingredientName)) {
         return ingredientsMap.get(ingredientName)[type];
     }
-    if(DEVMODE){
+    let arr = Array.from(ingredientsMap.keys());
+    for (let i = 0; i < arr.length; i++) {
+        if (ingredientName.includes(arr[i])) {
+            return ingredientsMap.get(arr[i])[type];
+        }
+    }
+    // Only add to MAYBES if there are NO subIngredients
+    if (DEVMODE && (!Array.isArray(ingredient.subIngredients) || ingredient.subIngredients.length === 0)) {
         MAYBES.set(ingredientName, true);
     }
     return "maybe";
 }
 
 function computeJain (ingredients) {
-    var jain = "yes";
-
-    var allJain = true;
-    var anyNonVeg = false;
-    var anyNonJain = false;
-    let stop = false;
+    let foundMaybe = false;
     for (let i = 0; i < ingredients.length; i++) {
-        if(stop) {continue}
-        var ingredient = ingredients [i];
+        let ingredient = ingredients[i];
+        if (check(ingredient.name)) {
+            ingredient.jain = "maybe";
+            continue;
+        }
+        let value;
         if (ingredient.subIngredients && ingredient.subIngredients.length > 0) {
-            if(ingredients[i].jain == null){
-                ingredients[i].jain = checkIngredient(ingredients[i], "jain");
-            }
-            let subJain = ingredients[i].jain;
-            if (subJain === "no") { // if subIngredient is not jain
-                allJain = allJain && false;
-                return "no";
-            } else if (subJain === "yes") { // if subIngredient is jain
-                allJain = allJain && true;
-            } else if (subJain === "maybe") { // if subIngredient is not sure jain
-                allJain = allJain && false;
-            }
+            value = checkIngredient(ingredient, "jain");
         } else {
-            if(ingredients[i].jain == null){
-                ingredients[i].jain = checkIngredient(ingredients[i], "jain");
+            if (ingredient.jain == null) {
+                ingredient.jain = checkIngredient(ingredient, "jain");
             }
-            let jainVal = ingredients[i].jain;
-            if (jainVal === "no") {
-                allJain = allJain && false;
-                return "no";
-            } else if (jainVal === "yes") {
-                allJain = allJain && true;
-            } else if (jainVal === "maybe") {
-                allJain = allJain && false;
-            }
+            value = ingredient.jain;
+        }
+        if (value === "no") {
+            return "no";
+        } else if (value === "maybe") {
+            foundMaybe = true;
         }
     }
-
-    if (allJain && !anyNonVeg) {
-        jain = "yes"
-    } else if (anyNonVeg || anyNonJain) {
-        jain = "no"
-    } else {
-        jain = "maybe"
-    }
-    return jain;
+    return foundMaybe ? "maybe" : "yes";
 }
 
 function computeVegetarian (ingredients) {
-    //TODO: change similar to compute Jain also change computeVegan has bugs.
-    let veg = true;
-    let maybe = false;
-    for (let i in ingredients) {
+    let foundMaybe = false;
+    for (let i = 0; i < ingredients.length; i++) {
         let ing = ingredients[i];
-        if (ing.subIngredients) {
-            if (ingredients[i].vegetarian == null){
-                ingredients[i].vegetarian = checkIngredient(ingredients[i], "vegetarian");
-            }
-            let subVeg = ingredients[i].vegetarian;
-            if (subVeg === "no"){
-                return "no";
-            } else if(subVeg === "yes"){
-                veg = veg && true;
-            } else {
-                maybe = maybe || true;
-            }
+        if (check(ing.name)) {
+            ing.vegetarian = "maybe";
             continue;
         }
-        if (ingredients[i].vegetarian == null){
-            ingredients[i].vegetarian = checkIngredient(ingredients[i], "vegetarian");
+        let value;
+        if (ing.subIngredients && ing.subIngredients.length > 0) {
+            value = checkIngredient(ing, "vegetarian");
+        } else {
+            if (ing.vegetarian == null) {
+                ing.vegetarian = checkIngredient(ing, "vegetarian");
+            }
+            value = ing.vegetarian;
         }
-        let isVeg = ingredients[i].vegetarian;
-        if (isVeg == "yes") {
-            veg &= true;
-        }
-        else if (isVeg == "no") {
+        if (value === "no") {
             return "no";
-        }
-        else {
-            maybe = maybe || true;
+        } else if (value === "maybe") {
+            foundMaybe = true;
         }
     }
-    if (maybe) {
-        return "maybe";
-    } else {
-        return "yes";
-    }
+    return foundMaybe ? "maybe" : "yes";
 }
 
 function computeVegan(ingredients){
-    let veg = true;
-    let maybe = false;
-    for (let i in ingredients) {
+    let foundMaybe = false;
+    for (let i = 0; i < ingredients.length; i++) {
         let ing = ingredients[i];
-        if (ing.subIngredients) {
-            if (ingredients[i].vegan == null){
-                ingredients[i].vegan = checkIngredient(ingredients[i], "vegan");
+        if (check(ing.name)) {
+            ing.vegan = "maybe";
+            continue;
+        }
+        let value;
+        if (ing.subIngredients && ing.subIngredients.length > 0) {
+            value = checkIngredient(ing, "vegan");
+        } else {
+            if (ing.vegan == null) {
+                ing.vegan = checkIngredient(ing, "vegan");
             }
-            let subVeg = ingredients[i].vegan;
-            if (subVeg === "no"){
-                return "no";
-            } else if(subVeg === "yes"){
-                veg = veg && true;
-            } else {
-                maybe = maybe || true;
-            }
-            continue
+            value = ing.vegan;
         }
-        if (ingredients[i].vegan == null){
-            ingredients[i].vegan = checkIngredient(ingredients[i], "vegan");
-        }
-        let isVegan = ingredients[i].vegan;
-        if (isVegan == "yes") {
-            veg &= true;
-        }
-        else if (isVegan == "no") {
+        if (value === "no") {
             return "no";
-        }
-        else {
-            maybe = maybe || true;
+        } else if (value === "maybe") {
+            foundMaybe = true;
         }
     }
-    if (maybe) {
-        return "maybe";
-    }else {
-        return "yes";
-    }
-}
-
-function isJainTithi(ingredientName){
-    return true
+    return foundMaybe ? "maybe" : "yes";
 }
 
 function displayIngredients (ingredients, subCount = 0) {
@@ -288,7 +394,12 @@ function displayIngredients (ingredients, subCount = 0) {
         let jain = ingredients[i].jain;
         let veg = ingredients[i].vegetarian;
         let vegan = ingredients[i].vegan;
-        displayButton &= ! (jain === "maybe") && !(veg === "maybe") && !(vegan === "maybe()");
+        // Hide the button if any ingredient is maybe, but now when check()
+        if (!check(ingredients[i].name)) {
+            if (jain === "maybe" || veg === "maybe" || vegan === "maybe") {
+                displayButton = false;
+            }
+        }
         displayString += "<tr>";
         displayString += "<td>" + sub + ingredients[i].name + "</td>";
         displayString += "<td>" + jain + "</td>";
@@ -341,14 +452,12 @@ function cleanAmazonUrl(url) {
 // Function to extract ingredients
 function extractIngredients() {
     // Common selectors where ingredients might be found
-
     const possibleSelectors = [
         '#nic-ingredients-content'
     ];
 
     let ingredients = '';
-    let otherIngredientsAsJson;
-    let ingredientsList = [];
+    let ingredientsListForDiet = [];
 
     // Extract product name
     const productNameElement = document.querySelector('span#productTitle');
@@ -357,23 +466,18 @@ function extractIngredients() {
     const dietryList = [];
 
     // Extract product description
-
     const productDescriptionElement = document.querySelector('div#productDescription_feature_div');
     const productDescriptionSpanElement = productDescriptionElement? productDescriptionElement.querySelector('span') : undefined;
     const productDescription = productDescriptionSpanElement ? productNameElement.innerText.trim() : 'N/A';
 
-
     // Extract ingredients
     for (let selector of possibleSelectors) {
         const element = document.querySelector(selector);
-
         if (element) {
             const text = element.firstChild.textContent.trim();
-
             if (text) {
                 ingredients = text;
-                otherIngredientsAsJson = convertToJsonArray(ingredients)[0];
-                ingredientsList.push(...otherIngredientsAsJson);
+                ingredientsListForDiet = processIngredients(ingredients)[0];
             }
         }
     }
@@ -382,7 +486,6 @@ function extractIngredients() {
     const categotiesElement = document.querySelector('div#desktop-breadcrumbs_feature_div');
     const categotiesListElement = categotiesElement.querySelectorAll('a.a-link-normal');
     const categoriesList = [];
-
     categotiesListElement.forEach(categoryLinkElement => {
         var categoriesText = categoryLinkElement.innerText.trim();
         if (categoriesText != 'Categories') {
@@ -396,15 +499,13 @@ function extractIngredients() {
     const container = document.querySelector('#main-image-container');
     const imgElements = container.querySelectorAll('img');
     const imageSrcs = Array.from(imgElements)
-    .map(img => img.getAttribute('src'))
-    .filter(src => src && src.startsWith('http') && !src.endsWith("gif"));
+        .map(img => img.getAttribute('src'))
+        .filter(src => src && src.startsWith('http') && !src.endsWith("gif"));
     console.log(JSON.stringify(imageSrcs, null, 2));
 
     const productDetailsElement = document.querySelector('div#detailBullets_feature_div');
-
     const bulletItems = document.querySelectorAll('#detailBullets_feature_div .a-list-item');
     let upcValues = [];
-
     for (const item of bulletItems) {
         const labelSpan = item.querySelector('.a-text-bold');
         if (labelSpan && labelSpan.textContent.trim().startsWith('UPC')) {
@@ -418,41 +519,30 @@ function extractIngredients() {
         }
     }
 
-
-    let jain = computeJain(ingredientsList);
-    let veg = computeVegetarian(ingredientsList);
-    let vegan = computeVegan(ingredientsList);
+    let jain = computeJain(ingredientsListForDiet);
+    let veg = computeVegetarian(ingredientsListForDiet);
+    let vegan = computeVegan(ingredientsListForDiet);
 
     let productDetail = {
         "data":{
             "version":"Version 2.0",
             "data":{
                 "maindietary":[
-                    {
-                        "jain":jain
-                    },
-                    {
-                        "vegetarian":veg
-                    },
-                    {
-                        "vegan":vegan
-                    },
-                    {
-                        "tithi":"maybe"
-                    }
+                    { "jain":jain },
+                    { "vegetarian":veg },
+                    { "vegan":vegan },
+                    { "tithi":"maybe" }
                 ],
                 "dietary":dietryList,
                 "name":productName,
                 "description":productDescription,
                 "categories":categoriesList,
-                "ingredients":ingredientsList,
+                "ingredients":ingredientsListForDiet,
                 "barcode": upcValues,
                 "weburl": cleanAmazonUrl(window.location.href),
                 "brand":"Unkown",
                 "images":imageSrcs,
-                "store":[
-                    "Amazon"
-                ]
+                "store":[ "Amazon" ]
             },
             "status":"NEW"
         },
@@ -462,15 +552,11 @@ function extractIngredients() {
 
     // Convert JSON object to string with indentation
     const productDetailsJson = JSON.stringify(productDetail, null, 2);
-
     // Output JSON to console
     console.log('Product Details JSON:', productDetailsJson);
 
-
-
     // Create a floating display box
     if (ingredients) {
-
         const displayBox = document.createElement('div');
         displayBox.id = 'display-box';
         displayBox.style.position = 'fixed';
@@ -482,26 +568,23 @@ function extractIngredients() {
         displayBox.style.borderRadius = '5px';
         displayBox.style.zIndex = '9999';
         displayBox.style.maxWidth = '400px';
-
         displayBox.style.maxHeight = '700px';
         displayBox.style.overflow = 'auto';
-        console.log(otherIngredientsAsJson);
 
         displayBox.innerHTML = `
-                    <h3>Jain : ${jain}</h3>
-                    <h3>Vegetarian : ${veg}</h3>
-                    <h3>Vegan : ${vegan}</h3>
-                    <h3>URL : ${cleanAmazonUrl(window.location.href)}</h3>
-                    <h3>Dietry : ${JSON.stringify(dietryList)}</h3>
-                    <h3>Ingredients:</h3>
-                    <p>${displayIngredientsTable(otherIngredientsAsJson)}</p>
-                `;
+            <h3>Jain : ${jain}</h3>
+            <h3>Vegetarian : ${veg}</h3>
+            <h3>Vegan : ${vegan}</h3>
+            <h3>URL : ${cleanAmazonUrl(window.location.href)}</h3>
+            <h3>Dietry : ${JSON.stringify(dietryList)}</h3>
+            <h3>Ingredients:</h3>
+            <p>${displayIngredientsTable(ingredientsListForDiet)}</p>
+        `;
         document.body.appendChild(displayBox);
 
         console.log("displayButton: " + displayButton);
 
         if(displayButton) {
-
             // Optionally, create a button to copy JSON to clipboard
             const copyButton = document.createElement('button');
             copyButton.innerText = 'Save Product Details';
@@ -529,12 +612,8 @@ function extractIngredients() {
                             if (request.status === 200 && request.responseText.trim() === 'GOOD') {
                                 localStorage.setItem('par-username', user);
                                 localStorage.setItem('par-secret', pass);
-                                //alert('Authenticated successfully!');
                                 worked = true;
                                 navigator.clipboard.writeText("").then(function() {
-
-                                    // Show loading spinner first
-                                    // Create and show a CSS loading spinner
                                     const loadingBox = document.createElement('div');
                                     loadingBox.id = 'loading-box';
                                     loadingBox.style.position = 'fixed';
@@ -549,19 +628,16 @@ function extractIngredients() {
                                     loadingBox.style.justifyContent = 'center';
                                     loadingBox.style.alignItems = 'center';
                                     loadingBox.innerHTML = `<div style="
-                                  width: 300px;
-                                  height: 300px;
-                                  border: 4px solid #ccc;
-                                  border-top: 4px solid #3498db;
-                                  border-radius: 50%;
-                                  animation: spin 1s linear infinite;
-                                  "></div>
-                                  `;
-
+                                      width: 300px;
+                                      height: 300px;
+                                      border: 4px solid #ccc;
+                                      border-top: 4px solid #3498db;
+                                      border-radius: 50%;
+                                      animation: spin 1s linear infinite;
+                                      "></div>
+                                      `;
                                     document.body.appendChild(loadingBox);
                                     add(productDetail);
-                                    //navigator.clipboard.writeText(productDetailsJson);
-
                                 }, function(err) {
                                     console.error('Could not copy text: ', err);
                                 });
@@ -570,7 +646,6 @@ function extractIngredients() {
                             }
                         }
                     };
-
                     var data = JSON.stringify({ key: user+'--'+pass });
                     request.send(data);
                 }
@@ -578,21 +653,16 @@ function extractIngredients() {
                 if (!username || !secret) {
                     username = prompt('Enter your username:');
                     secret = prompt('Enter your password:');
-
                     if (!username || !secret) {
                         alert('Username and password are required.');
                         return;
                     }
                 }
-
                 sendRequest(username, secret);
                 if (!worked){
                     return;
                 }
                 navigator.clipboard.writeText(productDetailsJson).then(function() {
-
-                    // Show loading spinner first
-                    // Create and show a CSS loading spinner
                     const loadingBox = document.createElement('div');
                     loadingBox.id = 'loading-box';
                     loadingBox.style.position = 'fixed';
@@ -607,25 +677,20 @@ function extractIngredients() {
                     loadingBox.style.justifyContent = 'center';
                     loadingBox.style.alignItems = 'center';
                     loadingBox.innerHTML = `<div style="
-                                  width: 300px;
-                                  height: 300px;
-                                  border: 4px solid #ccc;
-                                  border-top: 4px solid #3498db;
-                                  border-radius: 50%;
-                                  animation: spin 1s linear infinite;
-                                  "></div>
-                                  `;
-
+                                      width: 300px;
+                                      height: 300px;
+                                      border: 4px solid #ccc;
+                                      border-top: 4px solid #3498db;
+                                      border-radius: 50%;
+                                      animation: spin 1s linear infinite;
+                                      "></div>
+                                      `;
                     document.body.appendChild(loadingBox);
                     add(productDetail);
-                    //navigator.clipboard.writeText(productDetailsJson);
-
                 }, function(err) {
                     console.error('Could not copy text: ', err);
                 });
             });
-        } else {
-
         }
     } else {
         const displayBox = document.createElement('div');
@@ -640,14 +705,11 @@ function extractIngredients() {
         displayBox.style.maxWidth = '400px';
         displayBox.style.maxHeight = '500px';
         displayBox.style.overflow = 'auto';
-
         displayBox.innerHTML = `
-                     <h3>Ingredients:</h3>
-                    <p>Unable to find ingredients, please look for another item.</p>
-                `;
+            <h3>Ingredients:</h3>
+            <p>Unable to find ingredients, please look for another item.</p>
+        `;
         document.body.appendChild(displayBox);
-
-
     }
 }
 
@@ -684,9 +746,7 @@ function splitIngredient(item2) {
     sub = item.slice(start + 1, item.length - 1).trim();
 
     return [name, sub];
-}
-
-
+}   
 
 function convertToJsonArray(input) {
     input = input
@@ -735,6 +795,7 @@ function convertToJsonArray(input) {
             vegan: null,
             subIngredients: null
         };
+        if (ingredient.name.replace(/[0-9]/gi, '') == "") {return {name: "NOT REAL"};}
 
         if (subString) {
             const [subIngredients, isSpecialCase2, specialCaseData2] = convertToJsonArray(subString);
@@ -761,7 +822,8 @@ function convertToJsonArray(input) {
         ingredient.jain = checkIngredient(ingredient, "jain");
 
         return ingredient;
-    });
+
+    }).filter(item => item.name !== "NOT REAL");
 
     return [structured, isSpecialCase, specialCaseData];
 }
@@ -770,7 +832,7 @@ function convertToJsonArray(input) {
     'use strict';
 
     // Wait for page to load completely
-    window.addEventListener('load', function() {
+    window.startLoad = function() {
         // Show loading spinner first
         // Create and show a CSS loading spinner
         const loadingBox = document.createElement('div');
@@ -810,11 +872,20 @@ function convertToJsonArray(input) {
 
         // Simulate loading (or replace with real async logic)
         setTimeout(() => {
+
             // Run the extraction
+            if(!startCalculation) {
+                return;
+            }
             extractIngredients();
             document.body.removeChild(loadingBox); // Remove spinner
         }, 1000); // adjust time if needed
 
 
-    });
+    };
+    if (!DEVMODE) {
+        startCalculation = true;
+        // Always start loading when the script runs in non-dev mode
+        window.startLoad();
+    }
 })();

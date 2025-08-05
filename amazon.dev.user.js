@@ -6,5 +6,5 @@
 // @author       Parshwa Shah
 // @match        https://www.amazon.com/*
 // @grant        none
-// @require      https://is-it-jain.github.io/Tampermonkey-Scripts/amazon.code.js
+// @require      https://localhost:8000/amazon.code.js
 // ==/UserScript==
