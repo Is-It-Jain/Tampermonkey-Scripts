@@ -272,8 +272,8 @@ leek,no,yes,yes,Root vegetable that grows underground - not suitable for Jain di
 lemon,yes,yes,yes,Citrus fruit - plant-based and naturally occurring,Citrus fruit - plant-based and naturally occurring,Citrus fruit - plant-based and naturally occurring
 lemon juice,yes,yes,yes,Extracted from citrus fruit - plant-based,Extracted from citrus fruit - plant-based,Extracted from citrus fruit - plant-based
 lemongrass,yes,yes,yes,Plant-based herb and flavoring,May be processed with non-vegetarian processing aids,Plant-based herb and flavoring
-less than 2% - dextrose,yes,yes,yes,Plant-based sugar derived from corn or other plants,Plant-based sugar derived from corn or other plants,Plant-based sugar derived from corn or other plants
-less than 2% - lactose,yes,yes,no,Milk sugar - dairy-derived but vegetarian-acceptable,Milk sugar - dairy-derived but vegetarian-acceptable,Derived from animal milk
+dextrose,yes,yes,yes,Plant-based sugar derived from corn or other plants,Plant-based sugar derived from corn or other plants,Plant-based sugar derived from corn or other plants
+lactose,yes,yes,no,Milk sugar - dairy-derived but vegetarian-acceptable,Milk sugar - dairy-derived but vegetarian-acceptable,Derived from animal milk
 linoleic acid,maybe,maybe,no,Essential fatty acid that can be plant or animal-derived,Essential fatty acid that can be plant or animal-derived,Often contains animal-derived components
 lipase,maybe,maybe,no,Enzyme that can be plant/microbial or animal-derived,Enzyme that can be plant/microbial or animal-derived,Often derived from animal pancreas
 lipids,maybe,maybe,no,Fats that can be plant or animal-derived,Fats that can be plant or animal-derived,Often contains animal-derived components
@@ -617,3 +617,31 @@ lemon juice concentrate,yes,yes,yes,,,
 citric acid,yes,yes,yes,,,
 milk fat,yes,yes,no,,,
 vanilla extract contains egg,no,no,no,,,
+paprika extract,yes,yes,yes,,,
+calcium lactate,yes,yes,yes,,,
+less calcium silicate,yes,yes,yes,,,
+anticaking agent,yes,yes,yes,,,
+silicon dioxide,yes,yes,yes,,,
+cheddar seasoning,yes,yes,yes,,,
+sodium diacetate,yes,yes,yes,,,
+malic acid,yes,yes,yes,,,
+gum arabic,yes,yes,yes,,,
+calcium silicate,yes,yes,yes,,,
+calcium stearate,yes,yes,yes,,,
+paprika,yes,yes,yes,,,
+tomato powder,yes,yes,yes,,,
+disodium inosinate,yes,yes,yes,,,
+guanylate,yes,yes,yes,,,
+bbq seasoning,no,no,no,,,
+black currant concentrate,yes,yes,yes,,,
+apple juice concentrate,yes,yes,yes,,,
+hot spicy seasoning,yes,yes,yes,,,
+maize,yes,yes,yes,,,
+sodium bicarbonate,yes,yes,yes,,,
+sodium pyrophosphate,yes,yes,yes,,,
+rosemary extract,yes,yes,yes,,,
+sodium hydroxide,yes,yes,yes,,,
+apple puree,yes,yes,yes,,,
+cherry juice,yes,yes,yes,,,
+pectin,yes,yes,yes,,,
+xanthan gum,no,yes,yes,,,
