@@ -1,7 +1,7 @@
 const strTest = str => /^[\(\)\[\]a-z;&%, 0-9]*$/gi.test(str);
 var displayButton = true;
 
-let DEVMODE = true;
+let DEVMODE = false;
 let MAYBES = new Map();
 
 var ingredientsMap = new Map();
