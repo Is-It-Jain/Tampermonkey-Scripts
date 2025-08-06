@@ -690,7 +690,7 @@ brown rice flower,yes,yes,yes,,,
 red lentil flour,yes,yes,yes,,,
 potato starch,no,yes,yes,,,
 flax seed,yes,yes,yes,,,
-glucono deltalactone
+glucono deltalactone,yes,yes,yes,,,
 konjac,no,yes,yes,Konjac is harvested by removing and killing the entire corm, which is analogous to root vegetables like onions, garlic, or potatoes,,
 modified potato corn starch,no,yes,yes,,,
 corn starch,yes,yes,yes,,,
@@ -716,3 +716,4 @@ chicory root fiber,no,yes,yes,Chicory is a root vegetable,,
 chocolate processed with alkali,yes,yes,yes,,,
 peanut oil,yes,yes,yes,,,
 tara gum,yes,yes,yes,,,
+
