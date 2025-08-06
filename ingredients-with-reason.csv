@@ -703,7 +703,7 @@ basil,yes,yes,yes,,,
 black pepper,yes,yes,yes,,,
 tapioca flour,yes,yes,yes,,,
 organic powdered sugar,yes,yes,yes,,,
-cassava flour,no,yes,yes,Cassava is a root vegetable, and like potatoes or carrots,,,
+cassava flour,no,yes,yes,"Cassava is a root vegetable, and like potatoes or carrots",,,
 potato flour,no,yes,yes,,,
 peppermint extract,yes,yes,yes,,,
 invert sugar contains almonds,yes,yes,yes,,,
@@ -716,5 +716,6 @@ chicory root fiber,no,yes,yes,Chicory is a root vegetable,,
 chocolate processed with alkali,yes,yes,yes,,,
 peanut oil,yes,yes,yes,,,
 tara gum,yes,yes,yes,,,
+
 
 
