@@ -2,10 +2,13 @@ const strTest = str => /^[\(\)\[\]a-z;&%, 0-9]*$/gi.test(str);
 var displayButton = true;
 
 let DEVMODE = false;
+let BETTERDEVMODE = false;
 let MAYBES = new Map();
 
 var ingredientsMap = new Map();
 var ingredientsList = [];
+
+let dietryList = [];
 
 function normalizeName(name) {
     return name
@@ -85,19 +88,21 @@ function check(name) {
         "natural color", "artificial color", "natural and artificial color",
         "natural flavors", "artificial flavors", "natural and artificial flavors",
         "natural colors", "artificial colors", "natural and artificial colors",
+        "color", "colors",
         "natral flavor", "natrul flavor", "naturl flavor", "naturall flavor", "natural falvor", "natural flaver", "natural flaovr", "natural flovour", "natural flavo", "natural flvour", "natural flvr", "natural flavoer",
         "artifical flavor", "artificial falvor", "artificial flaver", "artificial flaovr", "artificial flovour", "artificial flavo", "artificial flvour", "artificial flvr", "artificial flavoer",
         "natural and artifical flavor", "natural and artificial falvor", "natural and artificial flaver", "natural and artificial flaovr", "natural and artificial flovour", "natural and artificial flavo", "natural and artificial flvour", "natural and artificial flvr", "natural and artificial flavoer",
         "natural colour", "artificial colour", "natural and artificial colour", "natural colours", "artificial colours", "natural and artificial colours",
-        "natral color", "natrul color", "naturl color", "naturall color", "natural colro", "natural colur", "natural colr", "natural colro", "natural colro", "natural colro",
-        "artifical color", "artificial colro", "artificial colur", "artificial colr", "artificial colro", "artificial colro",
-        "natural and artifical color", "natural and artificial colro", "natural and artificial colur", "natural and artificial colr", "natural and artificial colro",
+        "colour", "colours", "colur", "colro", "colr", "colar", "collor", "coolor", "collour", "coloour",
+        "natral color", "natrul color", "naturl color", "naturall color", "natural colro", "natural colur", "natural colr", "natural colar", "natural collor", "natural coolor",
+        "artifical color", "artificial colro", "artificial colur", "artificial colr", "artificial colar", "artificial collor", "artificial coolor",
+        "natural and artifical color", "natural and artificial colro", "natural and artificial colur", "natural and artificial colr", "natural and artificial colar", "natural and artificial collor", "natural and artificial coolor",
         "natural falvours", "natural flavoers", "natural flovors", "natural flvours", "natural flvr", "natural flavoers",
         "artificial falvours", "artificial flavoers", "artificial flovors", "artificial flvours", "artificial flvr", "artificial flavoers",
         "natural and artificial falvours", "natural and artificial flavoers", "natural and artificial flovors", "natural and artificial flvours", "natural and artificial flvr", "natural and artificial flavoers",
-        "natural colros", "natural coluors", "natural colrs", "natural colroes",
-        "artificial colros", "artificial coluors", "artificial colrs", "artificial colroes",
-        "natural and artificial colros", "natural and artificial coluors", "natural and artificial colrs", "natural and artificial colroes"
+        "natural colros", "natural coluors", "natural colrs", "natural colars", "natural collors", "natural coolors",
+        "artificial colros", "artificial coluors", "artificial colrs", "artificial colars", "artificial collors", "artificial coolors",
+        "natural and artificial colros", "natural and artificial coluors", "natural and artificial colrs", "natural and artificial colars", "natural and artificial collors", "natural and artificial coolors"
     ];
     name = normalizeName(name);
     return ambiguous.includes(name);
@@ -114,7 +119,7 @@ function csvToJson(csv) {
 
 let startCalculation = false;
 
-if (DEVMODE) {
+if (DEVMODE && !BETTERDEVMODE) {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = '.csv';
@@ -162,9 +167,8 @@ if (DEVMODE) {
         }
     }, 1200);
 }
-
-// Always fetch remote CSV as fallback/default
-fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason.csv')
+if (!DEVMODE){
+    fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason.csv')
     .then(response => {
         if (!response.ok) throw new Error('Failed to fetch CSV');
         return response.text();
@@ -183,31 +187,63 @@ fetch('https://is-it-jain.github.io/Tampermonkey-Scripts/ingredients-with-reason
     .catch(err => {
         console.error("Failed to fetch CSV:", err);
     });
+}else if (BETTERDEVMODE) {
+    fetch(`https://localhost:8080/${prompt("What is name of csv in the same directory as the amazon.code.js?")}.csv`)
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to fetch CSV');
+        return response.text();
+    })
+    .then(csv => {
+        const jsonData = csvToJson(csv);
+        console.log("CSV loaded", jsonData.length);
+        for (const row of jsonData) {
+            const key = normalizeName(row.name);
+            ingredientsList.push(key);
+            ingredientsMap.set(key, row);
+        }
+        window.ingredientsMap = ingredientsMap;
+        console.log(ingredientsMap);
+    })
+    .catch(err => {
+        console.error("Failed to fetch CSV:", err);
+    });
+}
 
 function checkIngredient (ingredient, type) {
     let ingredientName = ingredient.name;
     // If the ingredient has subIngredients, use the appropriate compute function and do NOT add to MAYBES
     console.log(ingredient)
     if (ingredient.subIngredients) {
-        let nonAmbiguousSubs = ingredient.subIngredients.filter(sub => !check(sub.name));
         if (type === "jain") {
-            return computeJain(nonAmbiguousSubs);
+            return computeJain(ingredient.subIngredients);
         } else if (type === "vegetarian") {
-            return computeVegetarian(nonAmbiguousSubs);
+            return computeVegetarian(ingredient.subIngredients);
         } else if (type === "vegan") {
-            return computeVegan(nonAmbiguousSubs);
+            return computeVegan(ingredient.subIngredients);
         } else {
             return "maybe";
         }
     }
     // Otherwise, check the map as before
     if (ingredientsMap.has(ingredientName)) {
+        if(type !== "jain" && (dietryList.includes('Vegan') || dietryList.includes('plant-based') || dietryList.includes('Plant Based') || dietryList.includes('Plant-based'))) {
+            return "yes";
+        } else if(check(ingredientName)) {
+            if  (dietryList.includes('Vegan') || dietryList.includes('plant-based') || dietryList.includes('Plant Based') || dietryList.includes('Plant-based')) {
+                return "yes";
+            }
+            return "maybe";
+        }
         return ingredientsMap.get(ingredientName)[type];
     }
-    let arr = Array.from(ingredientsMap.keys());
-    for (let i = 0; i < arr.length; i++) {
-        if (ingredientName.includes(arr[i])) {
-            return ingredientsMap.get(arr[i])[type];
+    if (DEVMODE && !BETTERDEVMODE) {
+        let arr = Array.from(ingredientsMap.keys());
+        for (let i = 0; i < arr.length; i++) {
+            if (ingredientName.includes(arr[i])) {
+                console.log("Found in map: " + arr[i]);
+                console.log("For " + ingredientName)
+                return ingredientsMap.get(arr[i])[type];
+            }
         }
     }
     // Only add to MAYBES if there are NO subIngredients
@@ -381,7 +417,15 @@ function extractIngredients() {
     const productNameElement = document.querySelector('span#productTitle');
     const productName = productNameElement ? productNameElement.innerText.trim() : 'N/A';
 
-    const dietryList = [];
+    const dietryListData = document.getElementsByClassName('a-size-base a-color-base _cse-nutritional-info-and-ingredient-card_style_dilText__1iIqY');
+
+    for (let i = 0; i < dietryListData.length; i++) {
+        const element = dietryListData[i];
+        const text = element.innerText.trim();
+        if (text) {
+            dietryList.push(text);
+        }
+    }
 
     // Extract product description
     const productDescriptionElement = document.querySelector('div#productDescription_feature_div');
@@ -801,7 +845,7 @@ function convertToJsonArray(input) {
 
 
     };
-    if (!DEVMODE) {
+    if (!DEVMODE || BETTERDEVMODE) {
         startCalculation = true;
         // Always start loading when the script runs in non-dev mode
         window.startLoad();
