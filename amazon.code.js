@@ -105,6 +105,9 @@ function check(name) {
         "natural and artificial colros", "natural and artificial coluors", "natural and artificial colrs", "natural and artificial colars", "natural and artificial collors", "natural and artificial coolors"
     ];
     name = normalizeName(name);
+    if (ingredientsMap.has(name)){
+        return  (ingredientsMap.get(name).jain === "maybe" || ingredientsMap.get(name).vegetarian === "maybe" || ingredientsMap.get(name).vegan === "maybe");
+    }
     return ambiguous.includes(name);
 }
 
@@ -214,6 +217,12 @@ function checkIngredient (ingredient, type) {
     // If the ingredient has subIngredients, use the appropriate compute function and do NOT add to MAYBES
     console.log(ingredient)
     if (ingredient.subIngredients) {
+        // Special case: if exactly 1 subingredient and parent exists in CSV, use parent's value directly
+        if (ingredient.subIngredients.length === 1 && ingredientsMap.has(ingredientName)) {
+            return ingredientsMap.get(ingredientName)[type];
+        }
+        
+        // Normal case for multiple subingredients or when parent not in CSV
         if (type === "jain") {
             return computeJain(ingredient.subIngredients);
         } else if (type === "vegetarian") {
@@ -517,8 +526,89 @@ function extractIngredients() {
     // Output JSON to console
     console.log('Product Details JSON:', productDetailsJson);
 
-    // Create a floating display box
-    if (ingredients) {
+    // Check if item already exists before creating display
+    function checkIfItemExists(barcodes, itemName, callback) {
+        // If no barcodes found, proceed normally
+        if (!barcodes || barcodes.length === 0) {
+            console.log('No barcode found, proceeding with analysis');
+            callback(true);
+            return;
+        }
+
+        // Use the first barcode for the check
+        const barcode = barcodes[0];
+        const encodedBarcode = encodeURIComponent(barcode);
+        const getRequest = new XMLHttpRequest();
+        getRequest.open('GET', `https://mainserver-776168167171.us-west1.run.app/v1/getItem?q=${encodedBarcode}`, true);
+        
+        getRequest.onreadystatechange = function() {
+            if (getRequest.readyState === 4) {
+                if (getRequest.status === 200) {
+                    try {
+                        const response = JSON.parse(getRequest.responseText);
+                        console.log('API Response:', response);
+                        
+                        // Check if response["0"] exists and is not null
+                        const hasItems = response["0"] != null;
+                        
+                        if (hasItems) {
+                            // Item exists - show confirmation dialog
+                            const shouldUpdate = confirm(`Item with barcode "${barcode}" already exists in the database. Do you want to continue and potentially update it?`);
+                            if (shouldUpdate) {
+                                console.log('User chose to continue with existing item');
+                                callback(true);
+                            } else {
+                                console.log('User chose to cancel - item already exists');
+                                callback(false);
+                            }
+                        } else {
+                            // Item doesn't exist, proceed normally
+                            console.log('No existing items found, proceeding with analysis');
+                            callback(true);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing response:', e);
+                        callback(true); // Proceed if parsing fails
+                    }
+                } else {
+                    console.error('Error checking item existence:', getRequest.status);
+                    callback(true); // Proceed if check fails
+                }
+            }
+        };
+        
+        getRequest.onerror = function() {
+            console.error('Network error checking item existence');
+            callback(true); // Proceed if network error
+        };
+        
+        getRequest.send();
+    }
+
+    // Check if item exists first, then create display
+    checkIfItemExists(upcValues, productName, function(shouldProceed) {
+        if (!shouldProceed) {
+            // User chose not to proceed, show a simple message
+            const displayBox = document.createElement('div');
+            displayBox.style.position = 'fixed';
+            displayBox.style.top = '40px';
+            displayBox.style.right = '10px';
+            displayBox.style.padding = '10px';
+            displayBox.style.backgroundColor = '#fff3cd';
+            displayBox.style.border = '1px solid #ffeaa7';
+            displayBox.style.borderRadius = '5px';
+            displayBox.style.zIndex = '9999';
+            displayBox.style.maxWidth = '400px';
+            displayBox.innerHTML = `
+                <h3>Product Check Cancelled</h3>
+                <p>Item with this barcode already exists in database. Analysis cancelled.</p>
+            `;
+            document.body.appendChild(displayBox);
+            return;
+        }
+
+        // Create a floating display box
+        if (ingredients) {
         const displayBox = document.createElement('div');
         displayBox.id = 'display-box';
         displayBox.style.position = 'fixed';
@@ -575,6 +665,7 @@ function extractIngredients() {
                                 localStorage.setItem('par-username', user);
                                 localStorage.setItem('par-secret', pass);
                                 worked = true;
+                                
                                 navigator.clipboard.writeText("").then(function() {
                                     const loadingBox = document.createElement('div');
                                     loadingBox.id = 'loading-box';
@@ -621,37 +712,6 @@ function extractIngredients() {
                     }
                 }
                 sendRequest(username, secret);
-                if (!worked){
-                    return;
-                }
-                navigator.clipboard.writeText(productDetailsJson).then(function() {
-                    const loadingBox = document.createElement('div');
-                    loadingBox.id = 'loading-box';
-                    loadingBox.style.position = 'fixed';
-                    loadingBox.style.top = '40px';
-                    loadingBox.style.right = '10px';
-                    loadingBox.style.padding = '20px';
-                    loadingBox.style.backgroundColor = '#ffffff';
-                    loadingBox.style.border = '1px solid #ddd';
-                    loadingBox.style.borderRadius = '5px';
-                    loadingBox.style.zIndex = '10000';
-                    loadingBox.style.display = 'flex';
-                    loadingBox.style.justifyContent = 'center';
-                    loadingBox.style.alignItems = 'center';
-                    loadingBox.innerHTML = `<div style="
-                                      width: 300px;
-                                      height: 300px;
-                                      border: 4px solid #ccc;
-                                      border-top: 4px solid #3498db;
-                                      border-radius: 50%;
-                                      animation: spin 1s linear infinite;
-                                      "></div>
-                                      `;
-                    document.body.appendChild(loadingBox);
-                    add(productDetail);
-                }, function(err) {
-                    console.error('Could not copy text: ', err);
-                });
             });
         }
     } else {
@@ -673,6 +733,7 @@ function extractIngredients() {
         `;
         document.body.appendChild(displayBox);
     }
+    }); // Close the checkIfItemExists callback
 }
 
 function splitIngredient(item2) {
@@ -713,7 +774,15 @@ function splitIngredient(item2) {
 function convertToJsonArray(input) {
     input = input
         .split(/CONTAINS:/gi)[0]
+        .replace(/AND\/OR/gi, ', ')
+        .replace(/&/gi, ', ')
+        .replace(/\*/gi, ', ')
+        .replace(/<.*?>/gi, "")
+        .replace(/ingredients:/gi, "")
         .replace(/contains less than.*?% of/gi, "")
+        .replace(/\./gi, ', ')
+        .replace(/\:/gi, ', ')
+        .replace(/the following/gi, '')
         .replace(/\.$/g, '')
         .replace(/\[/g, '(')
         .replace(/\]/g, ')')
